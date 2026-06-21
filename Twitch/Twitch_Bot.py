@@ -4,8 +4,8 @@ import asyncio
 from twitchio.ext.commands import Bot
 from twitchio.message import Message
 
-from Core.SimpleMsg import SimpleMsg
-from Core.Message_Routing import router
+from lib.TwitchMsg import TwitchMsg
+from Twitch.Msg_Broadcaster import broadcaster
 
 class KrabBot(Bot):
     def __init__(self, filtered_words:list[str]):
@@ -26,6 +26,15 @@ class KrabBot(Bot):
         return
 
     async def event_message(self, message:Message):
-        msg = SimpleMsg(user=message.author.name, content=message.content)
-        asyncio.create_task(router.incoming_message(msg))
+        def has_slurs(message:str) -> bool:
+            return any(word in message.lower() for word in self.filtered_words)
+        
+        user:str = message.author.name
+        content:str = message.content
+        if has_slurs(content):
+            return
+
+        msg:TwitchMsg = TwitchMsg(user=user, content=content)
+        print(f"Message created: User: {user} Message: {content}")
+        asyncio.create_task(broadcaster.incoming_message(msg))
         return

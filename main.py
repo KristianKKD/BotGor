@@ -1,24 +1,21 @@
-from dotenv import load_dotenv
-import asyncio
 import os
 import time
+import asyncio
 
-from Core.Twitch_Bot import KrabBot
-from lib.Server import Server
-from Core.BotGor_API import botgor
+from lib.Environment import load_environment
+from Twitch.Twitch_Bot import KrabBot
+from Twitch.BotGor_API import BotGorService
 
-KEYS_PATH:str = "keys.env"
 FILTER_PATH:str = "censoredwords"
-PORTS_PATH:str = "ports.env"
 
-async def launch_comms():
-    print("Starting Server...")
-    Server(app=botgor, port=os.environ["BOTGOR_PORT"])
-    return
+async def main():
+    load_environment()
+    botgor_service:BotGorService = BotGorService()
+    twitch_bot:KrabBot = KrabBot(filtered_words=load_filtered_words(path=FILTER_PATH))
+    await twitch_bot.connect()
 
-async def launch_botgor():
-    print("Starting BotGor...")
-    await KrabBot(filtered_words=load_filtered_words(path=FILTER_PATH)).connect()
+    while botgor_service and not botgor_service.shutdown:
+        time.sleep(5)
     return
 
 def load_filtered_words(path:str):
@@ -30,17 +27,4 @@ def load_filtered_words(path:str):
 
 ###############################################
 if __name__ == "__main__":
-    load_dotenv(KEYS_PATH)
-    if not os.environ["TWITCH_TOKEN"] or not os.environ["TWITCH_CLIENT_ID"]:
-        raise ValueError("TWITCH_TOKEN and TWITCH_CLIENT_ID must be set in the environment variables.")
-    
-    load_dotenv(PORTS_PATH)
-    if not os.environ["BOTGOR_PORT"]:
-        raise ValueError("No BotGor port")
-    
-    asyncio.run(launch_comms())
-    asyncio.run(launch_botgor())
-
-    while True:
-        time.sleep(1)
-        print("beep")
+    asyncio.run(main())

@@ -1,15 +1,24 @@
 import uvicorn
+import threading
 import asyncio
 import time
 
-class Server():
+class Server:
     def __init__(self, app, port:int):
-        async def launch_server():
-            self.server = uvicorn.Server(self.config)
-            await self.server.serve()
-
         self.config = uvicorn.Config(app=app, host="127.0.0.1", port=port, reload=False)
-        asyncio.create_task(launch_server())
+        self.server = None
+        _ready = threading.Event()
+
+        thread = threading.Thread(target=self._run_server, args=(_ready,), daemon=True)
+        thread.start()
+
+        _ready.wait()
+        return
+
+    def _run_server(self, ready_flag):
+        self.server = uvicorn.Server(self.config)
+        ready_flag.set()
+        asyncio.run(self.server.serve())
         return
 
     def close_server(self):
@@ -19,3 +28,4 @@ class Server():
 
         self.server.should_exit = True
         return
+
