@@ -2,13 +2,8 @@ import discord
 from discord.ext import commands
 from discord.client import VoiceClient
 
-#VOICE_CHANNEL_ID = 1416079575628251167 #DiscGor stream
-#VOICE_CHANNEL_ID = 471406637643464724 #kami weebs
-#VOICE_CHANNEL_ID = 1201274493289648239 #kami chamber
-VOICE_CHANNEL_ID = 389460211666255882 #kami f
-
 class DiscordBot(commands.Bot): 
-    def __init__(self):
+    def __init__(self, channel_id:int):
         intents = discord.Intents.default()
         intents.voice_states = True
         super().__init__(
@@ -18,23 +13,41 @@ class DiscordBot(commands.Bot):
         self.play_queue:list[str] = []
         self.playing:bool = False
         self.voice_connected:bool = False
+        self.channel_id:int = channel_id
+        return
 
     async def on_ready(self):
-        print(f"Bot connected as: {str(self.user)}")
+        print(f"Bot connected as: {self.user}")
+        print(f"Guilds: {[guild.name for guild in self.guilds]}")
+        print(f"Voice clients at ready: {self.voice_clients}")
+
         for guild in self.guilds:
-            channel = guild.get_channel(VOICE_CHANNEL_ID)
+            channel = guild.get_channel(self.channel_id)
             if channel:
                 break
-        
+
+        if guild.voice_client:
+            print("Already connected to voice channel")
+            return
+
         if channel and isinstance(channel, discord.VoiceChannel):
             try:
                 await channel.connect()
                 self.voice_connected = True
-                print("Joined voice channel: " + str(channel.name))
+                print(f"Joined voice channel: {channel.name}")
             except Exception as e:
                 print("Failed to connect to voice channel:", type(e).__name__, e)
         else:
             print("Voice channel not found or not a voice channel.")
+        return
+
+    async def on_disconnect(self):
+        print("Discord bot disconnected from gateway")
+        return
+
+    async def on_resumed(self):
+        print("Discord bot resumed gateway session")
+        return
 
     async def queue_play(self, file_path:str):
         def play_callback(err):
@@ -49,6 +62,7 @@ class DiscordBot(commands.Bot):
                 play()
             else:
                 self.playing = False
+            return
 
         def play():
             self.playing = True
@@ -68,6 +82,7 @@ class DiscordBot(commands.Bot):
             self.play_queue.append(file_path)
         if not self.playing:
             play()
+        return
 
     async def stop_tts(self):
         print("Stopping TTS playback and clearing queue")
@@ -77,13 +92,15 @@ class DiscordBot(commands.Bot):
         voice_client : VoiceClient = self.voice_clients[0]
         if voice_client.is_playing():
             voice_client.stop()
+        return
 
     async def disconnect(self):
         print("Disconnecting from VC")
         if not self.voice_clients:
             return
         guild = self.guilds[0]
-        channel = guild.get_channel(VOICE_CHANNEL_ID)
+        channel = guild.get_channel(self.channel_id)
         if channel and isinstance(channel, discord.VoiceChannel):
             voice_client = guild.voice_client
             await voice_client.disconnect()
+        return
