@@ -11,4 +11,10 @@ def join_listeners(port:int) -> str:
 
 def post(msg:str, data:str, port:int) -> str:
     url = f"{BASE_IP}:{str(port)}"
-    return httpx.post(f"{url}/{msg}", data=data, timeout=2).json()
+    response:dict[str, str] = {}
+    try:
+        response = httpx.post(f"{url}/{msg}", data=data, timeout=2).json()
+    except:
+        pass
+
+    return response

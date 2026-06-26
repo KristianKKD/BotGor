@@ -5,7 +5,8 @@ import asyncio
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from lib.Environment import load_environment
+from lib.Environment import load_environment, find_port
+from lib.API_Comms import post
 from Discord.Discord_API import DiscordService
 
 from Discord.DiscordBot import DiscordBot
@@ -18,12 +19,13 @@ VOICE_CHANNEL_ID = 1201274493289648239 #kami chamber
 async def main():
     load_environment()
     bot:DiscordBot = DiscordBot(channel_id=VOICE_CHANNEL_ID)
-    await bot.start(os.getenv("DISCORD_BOT_TOKEN"))
-    print("test")
+    asyncio.create_task(bot.start(os.getenv("DISCORD_BOT_TOKEN")))
     discord_service:DiscordService = DiscordService(discord_bot=bot)
 
+    post("use_discord", str(True), find_port("DISCORD"))
+
     while discord_service and not discord_service.shutdown:
-        time.sleep(5)
+        await asyncio.sleep(5)
     return
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ class Msg_Broadcaster:
         
         return
 
-    def incoming_message(self, msg:TwitchMsg):
+    async def incoming_message(self, msg:TwitchMsg):
         self.message_queue.append(msg)
         if not self.processing:
             asyncio.create_task(self.process_queue())

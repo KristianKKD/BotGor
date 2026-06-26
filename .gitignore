@@ -5,3 +5,4 @@ web/
 audio/
 .vscode/
 censoredwords
+.tio.tokens.json

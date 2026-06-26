@@ -2,12 +2,13 @@ from elevenlabs.client import ElevenLabs
 from elevenlabs import stream
 import warnings
 import wave
-from TTS_Base import TextToSpeechBase
+from TTS.TTS_Engines.TTS_Base import TextToSpeechBase
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 class ElevenLabsTTS(TextToSpeechBase):
-    def __init__(self, api_key="", voice="", model_id=""):
-        super().__init__(api_key=api_key, voice=voice, model_id=model_id)
+    def __init__(self, id:int, api_key:str="", voice:str="", model_id:str=""):
+        super().__init__(id=id, api_key=api_key, voice=voice, model_id=model_id)
+        return
 
     def setup_engine(self, api_key:str, voice:str, model_id:str=""):
         self.elevenlabs = ElevenLabs(
@@ -18,9 +19,9 @@ class ElevenLabsTTS(TextToSpeechBase):
         if model_id == "" : self.model_id = "eleven_flash_v2_5"
         return
 
-    async def generate_audio(self, audio_path:str):
+    async def generate_audio(self, audio_path:str, text:str):
         audio_iterator = self.elevenlabs.text_to_speech.convert(
-            text=self.text,
+            text=text,
             voice_id=self.voice,
             model_id=self.model_id,
             output_format="mp3_44100_128",
@@ -37,9 +38,9 @@ class ElevenLabsTTS(TextToSpeechBase):
             wav_file.writeframes(audio_data)
         return
 
-    async def play_audio(self, audio_path:str):
+    async def play_audio(self, audio_path:str, text:str):
         audio_stream = self.elevenlabs.text_to_speech.stream(
-            text=self.text,
+            text=text,
             voice_id=self.voice,
             model_id=self.model_id,
             output_format="mp3_44100_128",
@@ -48,3 +49,5 @@ class ElevenLabsTTS(TextToSpeechBase):
         stream(audio_stream)
         return
 
+    def stop_audio(self):
+        return
