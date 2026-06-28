@@ -1,20 +1,17 @@
 import httpx
 
-from lib.Environment import find_port
+BASE_IP:str = "http://localhost"
 
-BASE_IP:str = "http://127.0.0.1"
-
-def join_listeners(port:int) -> str:
-    join_msg:str = "join"
-    botgor_port:int = find_port("TWITCH")
-    return post(msg=f"{join_msg}", data=str(port), port=botgor_port)
-
-def post(msg:str, data:str, port:int) -> str:
-    url = f"{BASE_IP}:{str(port)}"
+async def post(msg:str, port:int, json:dict[str, str]={}) -> str:
+    url = f"{BASE_IP}:{str(port)}/{msg}"
     response:dict[str, str] = {}
-    try:
-        response = httpx.post(f"{url}/{msg}", data=data, timeout=2).json()
-    except:
-        pass
+    print(f"Sending: {url} - {json}")
+    async with httpx.AsyncClient() as client:
+        try:
+            resp:httpx.Response = await client.post(url=url, json=json, timeout=5)
+            response:dict[str, str] = resp.json()
+        except Exception as e:
+            print(f"POST ERROR:{e}")
 
+    print(f"{url} got response: {response}")
     return response

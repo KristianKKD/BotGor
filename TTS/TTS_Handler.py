@@ -1,19 +1,18 @@
 import asyncio
 import copy
 
-from lib.API_Comms import post, find_port
+from lib.API_Comms import post
+from lib.Environment import find_port
 from TTS.TTS_Engines.TTS_Base import TextToSpeechBase
+from TTS.TTS_API import TTS_Service
 
-class TTS_Handler:
+class TTS_Handler(TTS_Service):
     def __init__(self, engine:TextToSpeechBase):
+        super().__init__()
+
         self.tts_in_progress:list[TextToSpeechBase] = []
         self.engine:TextToSpeechBase = engine
         self.tts_count:int = 0
-        self.use_discord:bool = False
-        return
-    
-    def toggle_discord(self, use_discord:bool):
-        self.use_discord:bool = use_discord
         return
 
     def speak(self, text:str, user:str):
@@ -40,7 +39,7 @@ class TTS_Handler:
         for tts in self.tts_in_progress:
             tts.stop_audio()
         if self.use_discord:
-            post("stop", "", find_port("DISCORD"))
+            post(msg="stop", port=find_port("DISCORD"))
 
         self.tts_in_progress = []
         return

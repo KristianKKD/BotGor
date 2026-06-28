@@ -1,6 +1,6 @@
 #python 3.11.9
 
-twitchio==3.2.2
+twitchio==2.10.0
 dotenv==1.2.2
 discord==2.3.2
 discord.py[voice]==2.7.1

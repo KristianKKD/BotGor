@@ -1,15 +1,21 @@
 import discord
-from discord.ext import commands
+from discord.ext.commands import Bot
 from discord.client import VoiceClient
 
-class DiscordBot(commands.Bot): 
+from Discord.Discord_API import Discord_Service
+
+class Discord_Bot(Bot, Discord_Service): 
     def __init__(self, channel_id:int):
+        Discord_Service.__init__(self=self)
+
         intents = discord.Intents.default()
         intents.voice_states = True
-        super().__init__(
+        Bot.__init__(
+            self=self,
             command_prefix="!",
             intents=intents
         )
+        
         self.play_queue:list[str] = []
         self.playing:bool = False
         self.voice_connected:bool = False

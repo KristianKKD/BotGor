@@ -45,7 +45,7 @@ class TextToSpeechBase(ABC):
 
         if use_discord:
             await self.generate_audio(audio_path=audio_path, text=text)
-            post(msg="play", data=audio_path, port=find_port("DISCORD"))
+            post(msg="play", port=find_port("DISCORD"), json={"audio_path":audio_path})
         else:
             await self.play_audio(audio_path=audio_path, text=text)
 
