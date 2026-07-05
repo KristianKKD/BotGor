@@ -11,15 +11,15 @@ from Discord.Discord_Bot import Discord_Bot
 from Discord.Discord_API import Discord_Service
 
 #VOICE_CHANNEL_ID = 1416079575628251167 #DiscGor stream
-#VOICE_CHANNEL_ID = 471406637643464724 #kami weebs
-VOICE_CHANNEL_ID = 1201274493289648239 #kami chamber
+VOICE_CHANNEL_ID = 471406637643464724 #kami weebs
+#VOICE_CHANNEL_ID = 1201274493289648239 #kami chamber
 #VOICE_CHANNEL_ID = 389460211666255882 #kami f
 
 async def main():
     load_environment()
 
-    service:Discord_Service = Discord_Service()
     bot:Discord_Bot = Discord_Bot(channel_id=VOICE_CHANNEL_ID)
+    service:Discord_Service = Discord_Service(discord_bot=bot)
     asyncio.create_task(bot.start(os.getenv("DISCORD_BOT_TOKEN")))
 
     while not service.shutdown:
