@@ -6,15 +6,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.Environment import load_environment
 from Twitch.Twitch_Bot import Twitch_Bot
+from Twitch.Twitch_API import Twitch_Service
 
 FILTER_PATH:str = "censoredwords"
 
 async def main():
     load_environment()
 
-    twitch_bot:Twitch_Bot = Twitch_Bot(filtered_words=load_filtered_words(path=FILTER_PATH))
-    await twitch_bot.start()
-    while not twitch_bot.shutdown:
+    service:Twitch_Service = Twitch_Service()
+    twitch_bot:Twitch_Bot = Twitch_Bot(filtered_words=load_filtered_words(path=FILTER_PATH), broadcaster=service.broadcaster)
+    await twitch_bot.login()
+    while not service.shutdown:
         await asyncio.sleep(5)
     return
 

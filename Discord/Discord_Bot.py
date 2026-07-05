@@ -2,11 +2,8 @@ import discord
 from discord.ext.commands import Bot
 from discord.client import VoiceClient
 
-from Discord.Discord_API import Discord_Service
-
-class Discord_Bot(Bot, Discord_Service): 
+class Discord_Bot(Bot): 
     def __init__(self, channel_id:int):
-        Discord_Service.__init__(self=self)
 
         intents = discord.Intents.default()
         intents.voice_states = True

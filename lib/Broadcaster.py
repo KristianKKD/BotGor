@@ -48,6 +48,7 @@ class Broadcaster:
                 asyncio.sleep(0.01)
 
             json:dict[str, str] = self.message_queue.popleft()
+            print(f"Broadcasting: {json}")
 
             for listener in self.listeners:
                 asyncio.create_task(post(msg="msg", port=listener.port, json=json))

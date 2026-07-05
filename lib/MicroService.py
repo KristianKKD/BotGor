@@ -13,7 +13,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
 
     app:FastAPI = None
 
-    def __init__(self, name:str, subscription_ports:list[int]=[]):
+    def __init__(self, name:str, subscription_ports:list[int]=[], broadcaster:Broadcaster=None):
         print(f"Starting {name}...")
 
         self.name:str = name
@@ -21,10 +21,10 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         self.port:int = find_port(self.name)
 
         self.app:FastAPI = FastAPI(title=f"{name}:app")
-        self.broadcaster:Broadcaster = Broadcaster()
+        self.broadcaster:Broadcaster = broadcaster if broadcaster else Broadcaster()
         server:Server = Server(app=self.app, port=find_port(name))
 
-        self._subscription_ports = subscription_ports
+        self._subscription_ports:list[int] = subscription_ports
         self._register_api()
         asyncio.ensure_future(self.join_listeners(subscription_ports=subscription_ports))
         return
@@ -33,7 +33,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         print(f"{self.name} received: {msg}")
         return {"service": self.name, "received": "ok"}
 
-    async def handle_join(self, req:dict[str, str]) -> dict[str, str]:
+    async def handle_join_request(self, req:dict[str, str]) -> dict[str, str]:
         print(f"Received join request: {req}")
         if not req:
             raise ValueError("Received empty join request!!")
@@ -78,7 +78,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
                 print(f"{self.name} joined all: {subscription_ports}")
                 return subscribed
             
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
 
         print(f"{self.name} failed to join {subscription_ports}")
         return {}
@@ -88,10 +88,6 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         async def lifespan(app:FastAPI):
             await self.join_listeners(self._subscription_ports)
 
-        @self.app.get("/health")
-        def health() -> dict[str, str]:
-            return {"service": self.name, "status": "ok"}
-
         @self.app.post("/shutdown")
         def close_server() -> dict[str, str]:
             self.shutdown = True
@@ -99,7 +95,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         
         @self.app.post("/join")
         async def join(req:dict[str, str]) -> dict[str, str]:
-            return await self.handle_join(req=req)
+            return await self.handle_join_request(req=req)
 
         @self.app.post("/msg")
         async def receive_msg(msg:dict[str, str]) -> dict[str, str]:

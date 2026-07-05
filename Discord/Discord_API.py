@@ -10,12 +10,6 @@ class Discord_Service(MicroServiceBase):
         super().__init__(name=APP_NAME, subscription_ports=self._tts_port)
 
         @self.app.post("/play")
-        def receive_msg(path:str) -> dict[str, str]:
-            self.queue_play(file_path=path)
+        def receive_msg(msg:dict[str, str]) -> dict[str, str]:
+            self.queue_play(file_path=msg["path"])
             return {"service": self.name, "status": "ok"}
-        
-    async def handle_join(self, req:dict[str, str]) -> dict[str, str]:
-        listeners:dict[str, str] = await super().handle_join(req)
-        if self._tts_port in listeners:
-            post("use_discord", self._tts_port, {"use_discord":str(True)})
-        return

@@ -15,10 +15,12 @@ def load_environment():
     return
 
 def find_port(name:str, retry:bool = False) -> int:
-    found:str = os.environ[name]
-    if not found:
+    try:
+        found:str = os.environ[name]
+    except:
         if retry:
             raise ValueError(f"No port found for {name}")
         else:
             load_environment()
+            return find_port(name=name, retry=True)
     return int(found)
