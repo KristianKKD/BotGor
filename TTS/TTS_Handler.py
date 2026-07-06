@@ -31,6 +31,20 @@ class TTS_Handler():
         self.processing:bool = False
         self.use_discord:bool = False
         self.broadcaster:Broadcaster = broadcaster
+        
+        self._voice:str = engine.voice
+
+        return
+
+    def set_voice(self, voice:str | int):
+        try:
+            voice_index:int = int(voice)
+            voices:dict[str, str] = self.engine.get_voices()
+            voice:str = voices[voice_index]
+        except ValueError:
+            pass
+
+        self._voice = voice
         return
 
     async def _speak_loop(self):
@@ -46,7 +60,7 @@ class TTS_Handler():
 
     async def speak(self, text:str, user:str):
         self._tts_count += 1
-        msg_engine:TTS_Base = self.engine.clone(new_id=self._tts_count)
+        msg_engine:TTS_Base = self.engine.clone(new_id=self._tts_count, voice=self._voice)
 
         tts:TTS_Message = TTS_Message(engine=msg_engine, text=text, user=user)
         

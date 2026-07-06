@@ -10,12 +10,12 @@ from lib.Environment import load_environment
 from Discord.Discord_Bot import Discord_Bot
 from Discord.Discord_API import Discord_Service
 
-#VOICE_CHANNEL_ID = 1416079575628251167 #DiscGor stream
-VOICE_CHANNEL_ID = 471406637643464724 #kami weebs
+VOICE_CHANNEL_ID = 1416079575628251167 #DiscGor stream
+#VOICE_CHANNEL_ID = 471406637643464724 #kami weebs
 #VOICE_CHANNEL_ID = 1201274493289648239 #kami chamber
 #VOICE_CHANNEL_ID = 389460211666255882 #kami f
 
-async def main():
+async def run_discord():
     load_environment()
 
     bot:Discord_Bot = Discord_Bot(channel_id=VOICE_CHANNEL_ID)
@@ -27,5 +27,5 @@ async def main():
     return
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_discord())
     

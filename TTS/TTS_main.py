@@ -27,10 +27,20 @@ async def handle_input(tts:TTS_Handler):
             await tts.speak(text=content, user="UIGor")
             return True
         
+        async def show_voices(_):
+            print(tts.engine.get_voices())
+            return
+
+        async def select_voice(content):
+            tts.set_voice(voice=content)
+            return
+
         commands = {
             "exit": handle_exit,
             "tts": manual_tts,
             "stoptts": stop_tts,
+            "voices": show_voices,
+            "select": select_voice,
         }
 
         while True:
@@ -54,20 +64,22 @@ async def handle_input(tts:TTS_Handler):
             print("Invalid input:" + user_input)
     return
 
-async def main():
+async def run_tts(manual_input:bool=False):
     load_environment()
     
-    tts_engine:TTS_Base = TTS_System(id=0)
-    #tts_engine:TextToSpeechBase = ElevenLabsTTS(api_key=os.environ["ELEVEN_LABS_KEY"], voice="xJ6quMToF3QzDncP3TLF", model_id="")
+    tts_engine:TTS_Base = TTS_System()
+    #tts_engine:TTS_Base = ElevenLabsTTS(api_key=os.environ["ELEVEN_LABS_KEY"], voice="xJ6quMToF3QzDncP3TLF")
     
     broadcaster:Broadcaster = Broadcaster()
     tts_handler:TTS_Handler = TTS_Handler(engine=tts_engine, broadcaster=broadcaster)
     service:TTS_Service = TTS_Service(tts=tts_handler, broadcaster=broadcaster)
 
-    asyncio.create_task(handle_input(tts=tts_handler))
+    if manual_input:
+        asyncio.create_task(handle_input(tts=tts_handler))
+
     while not service.shutdown:
         await asyncio.sleep(5)
     return
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_tts(manual_input=True))

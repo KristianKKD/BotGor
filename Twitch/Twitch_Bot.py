@@ -89,6 +89,7 @@ class ListenerComponent(twitchio.ext.commands.Component):
             print(f"Message filtered from user: {user}")
             return
 
+
         msg:TwitchMsg = TwitchMsg(user=user, content=content)
         print(f"Message created: User: {user} Message: {content}")
 

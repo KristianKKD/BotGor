@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 class TTS_Base(ABC):
-    def __init__(self, id:int, api_key:str="", voice:str="", model_id:str=""):
+    def __init__(self, id:int=0, api_key:str="", voice:str="", model_id:str=""):
         print(f"Creating TTS instance of ID: {id}")
 
         self.id:int = id
@@ -22,11 +22,11 @@ class TTS_Base(ABC):
         self.setup_engine(api_key, voice)
         return
 
-    def clone(self, new_id:int):
+    def clone(self, new_id:int, voice:str):
         return self.__class__(
             id=new_id,
             api_key=self.api_key,
-            voice=self.voice,
+            voice=voice,
             model_id=self.model_id,
         )
 
@@ -56,12 +56,22 @@ class TTS_Base(ABC):
         return
 
     @abstractmethod
+    def get_voices(self) -> list[str]:
+        """Print the available voices. Must be implemented by subclasses"""
+        return
+    
+    @abstractmethod
+    def select_voice(self, voice:str) -> list[str]:
+        """Set the voice for future TTS audio. Must be implemented by subclasses"""
+        return
+
+    @abstractmethod
     def setup_engine(self, api_key:str, voice:str, model_id:str=""):
         """Initialize the TTS engine. Must be implemented by subclasses."""
         pass
 
     @abstractmethod
-    def generate_audio(self, audio_path:str, text:str):
+    def generate_audio(self, audio_path:str, text:str) -> str:
         """Generate audio file from text. Must be implemented by subclasses."""
     
     @abstractmethod

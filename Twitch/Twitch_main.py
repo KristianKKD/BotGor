@@ -10,7 +10,7 @@ from Twitch.Twitch_API import Twitch_Service
 
 FILTER_PATH:str = "censoredwords"
 
-async def main():
+async def run_twitch():
     load_environment()
 
     service:Twitch_Service = Twitch_Service()
@@ -29,4 +29,4 @@ def load_filtered_words(path:str):
 
 ###############################################
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_twitch())
