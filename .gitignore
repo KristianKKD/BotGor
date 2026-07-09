@@ -6,3 +6,4 @@ audio/
 .vscode/
 censoredwords
 .tio.tokens.json
+.pytest*

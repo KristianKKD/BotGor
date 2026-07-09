@@ -33,13 +33,16 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         print(f"{self.name} received: {msg}")
         return {"service": self.name, "received": "ok"}
 
-    async def handle_join_request(self, req:dict[str, str]) -> dict[str, str]:
+    async def handle_inbound_join(self, req:dict[str, str]) -> dict[str, str]:
         print(f"Received join request: {req}")
         if not req:
             raise ValueError("Received empty join request!!")
         
-        name:str = req["name"]
-        port:int = int(req["port"])
+        name:str = req.get("name", "")
+        port:int = int(req.get("port", 0))
+        if not name or not port:
+            raise ValueError("Received empty name/port in join request!")
+        
         await self.broadcaster.add_listener(name=name, port=port)
         listeners:dict[str, str] = {self.name:str(self.port)} | (self.broadcaster.get_listeners())
         print(f"{name} joined listeners, returning our listeners: {listeners}")
@@ -95,7 +98,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         
         @self.app.post("/join")
         async def join(req:dict[str, str]) -> dict[str, str]:
-            return await self.handle_join_request(req=req)
+            return await self.handle_inbound_join(req=req)
 
         @self.app.post("/msg")
         async def receive_msg(msg:dict[str, str]) -> dict[str, str]:

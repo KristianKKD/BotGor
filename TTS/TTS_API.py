@@ -4,7 +4,6 @@ from lib.Broadcaster import Broadcaster
 
 from TTS.TTS_Handler import TTS_Handler
 
-
 APP_NAME:str = "TTS"
 
 class TTS_Service(MicroServiceBase):
@@ -15,13 +14,19 @@ class TTS_Service(MicroServiceBase):
     
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
         response:dict[str, str] = await super().handle_msg(msg=msg)
-        await self.tts.speak(text=msg["content"], user=msg["user"])
+
+        user:str = msg.get("user", "")
+        content:str = msg.get("content", "")
+        if not user or not content:
+            raise ValueError("Received empty user/content in msg!")
+        
+        await self.tts.speak(text=content, user=user)
         return response
     
-    async def handle_join_request(self, req:dict[str, str]) -> dict[str, str]:
-        listeners:dict[str, str] = await super().handle_join_request(req)
+    async def handle_inbound_join(self, req:dict[str, str]) -> dict[str, str]:
+        listeners:dict[str, str] = await super().handle_inbound_join(req)
 
         if not self.tts.use_discord:
             discord_port:int = find_port("DISCORD")
-            self.tts.use_discord = str(discord_port) == req["port"]
+            self.tts.use_discord = str(discord_port) == req.get("port", "")
         return listeners

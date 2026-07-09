@@ -9,12 +9,13 @@ from Twitch.Twitch_Bot import Twitch_Bot
 from Twitch.Twitch_API import Twitch_Service
 
 FILTER_PATH:str = "censoredwords"
+PREFIX:str = "!"
 
 async def run_twitch():
     load_environment()
 
     service:Twitch_Service = Twitch_Service()
-    twitch_bot:Twitch_Bot = Twitch_Bot(filtered_words=load_filtered_words(path=FILTER_PATH), broadcaster=service.broadcaster)
+    twitch_bot:Twitch_Bot = Twitch_Bot(filtered_words=load_filtered_words(path=FILTER_PATH), broadcaster=service.broadcaster, prefix=PREFIX)
     await twitch_bot.login()
     while not service.shutdown:
         await asyncio.sleep(5)

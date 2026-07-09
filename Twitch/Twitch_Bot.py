@@ -14,7 +14,7 @@ from lib.Broadcaster import Broadcaster
 #http://localhost:4343/oauth?scopes=Amanage%3Abroadcast+moderator%3Aread%3Ashield_mode+moderator%3Amanage%3Aannouncements+channel%3Aread%3Agoals+moderator%3Aread%3Aautomod_settings+moderator%3Amanage%3Aautomod+whispers%3Aedit+moderator%3Aread%3Achat_messages+user%3Aread%3Awhispers+channel%3Amoderate+moderator%3Aread%3Abanned_users+moderator%3Aread%3Amoderators+channel%3Aread%3Astream_key+moderator%3Amanage%3Aunban_requests+analytics%3Aread%3Aextensions+moderator%3Amanage%3Ashoutouts+chat%3Aedit+moderator%3Aread%3Awarnings+analytics%3Aread%3Agames+channel%3Aread%3Asubscriptions+user%3Amanage%3Achat_color+moderator%3Amanage%3Aautomod_settings+moderator%3Aread%3Achat_settings+moderator%3Aread%3Ablocked_terms+channel%3Aread%3Aguest_star+moderator%3Aread%3Avips+user%3Awrite%3Achat+moderation%3Aread+moderator%3Aread%3Asuspicious_users+channel%3Amanage%3Aredemptions+moderator%3Amanage%3Aguest_star+channel%3Aedit%3Acommercial+user%3Aread%3Aemotes+user%3Abot+channel%3Aread%3Avips+user%3Aread%3Afollows+channel%3Aread%3Apolls+channel%3Amanage%3Aads+user%3Aedit%3Abroadcast+channel%3Amanage%3Araids+user%3Aread%3Asubscriptions&force_verify=true
 
 class Twitch_Bot(AutoBot):
-    def __init__(self, filtered_words:list[str], broadcaster:Broadcaster):
+    def __init__(self, filtered_words:list[str], broadcaster:Broadcaster, prefix:str=""):
         USER_ID = os.environ["TWITCH_KRABGOR_ACCOUNT_ID"]
         BOT_ID = os.environ["TWITCH_BOTGOR_ACCOUNT_ID"]
         subs:eventsub.SubscriptionPayload = [
@@ -27,7 +27,7 @@ class Twitch_Bot(AutoBot):
             client_secret=os.environ["TWITCH_SECRET"],
             bot_id=BOT_ID,
             owner_id=USER_ID,
-            prefix='',
+            prefix=prefix,
             subscriptions=subs,
             force_subscribe=True
         )
@@ -88,7 +88,9 @@ class ListenerComponent(twitchio.ext.commands.Component):
         if has_slurs(content):
             print(f"Message filtered from user: {user}")
             return
-
+        
+        if not content.startswith(self.bot._get_prefix):
+            return
 
         msg:TwitchMsg = TwitchMsg(user=user, content=content)
         print(f"Message created: User: {user} Message: {content}")

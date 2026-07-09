@@ -1,10 +1,11 @@
 import discord
+from discord import FFmpegPCMAudio
 from discord.ext.commands import Bot
 from discord.client import VoiceClient
+from collections import deque 
 
 class Discord_Bot(Bot): 
     def __init__(self, channel_id:int):
-
         intents = discord.Intents.default()
         intents.voice_states = True
         Bot.__init__(
@@ -13,15 +14,13 @@ class Discord_Bot(Bot):
             intents=intents
         )
         
-        self.play_queue:list[str] = []
+        self.play_queue:deque[str] = deque([])
         self.playing:bool = False
-        self.voice_connected:bool = False
         self.channel_id:int = channel_id
         return
 
     async def on_ready(self):
         print(f"Bot connected as: {self.user}")
-        print(f"Guilds: {[guild.name for guild in self.guilds]}")
         print(f"Voice clients at ready: {self.voice_clients}")
 
         for guild in self.guilds:
@@ -36,7 +35,7 @@ class Discord_Bot(Bot):
         if channel and isinstance(channel, discord.VoiceChannel):
             try:
                 await channel.connect()
-                self.voice_connected = True
+                self.voice_client:VoiceClient = self.voice_clients[0]
                 print(f"Joined voice channel: {channel.name}")
             except Exception as e:
                 print("Failed to connect to voice channel:", type(e).__name__, e)
@@ -54,9 +53,6 @@ class Discord_Bot(Bot):
 
     async def queue_play(self, file_path:str):
         def play_callback(err):
-            if len(self.play_queue) > 0:
-                self.play_queue.pop(0)
-
             if err:
                 print("Failed callback, RIP")
                 return
@@ -69,16 +65,13 @@ class Discord_Bot(Bot):
 
         def play():
             self.playing = True
-
-            voice_client : VoiceClient = self.voice_clients[0]
             try:
-                file = self.play_queue[0]
-                source = discord.FFmpegPCMAudio(file)
-                voice_client.play(source=source, after=play_callback)
-                #print("Playing " + file)
-                
+                file:str = self.play_queue.popleft()
+                source:FFmpegPCMAudio = FFmpegPCMAudio(file)
+                self.voice_client.play(source=source, after=play_callback)
             except Exception as e:
                 print("Error playing file: " + str(e))
+            return
 
         #play if nothing is going on, otherwise queue it
         if file_path is not None:
@@ -89,12 +82,11 @@ class Discord_Bot(Bot):
 
     async def stop_tts(self):
         print("Stopping TTS playback and clearing queue")
-        self.play_queue = []
-        if not self.voice_clients:
+        self.play_queue.clear()
+        if not self.voice_client:
             return
-        voice_client : VoiceClient = self.voice_clients[0]
-        if voice_client.is_playing():
-            voice_client.stop()
+        if self.voice_client.is_playing():
+            self.voice_client.stop()
         return
 
     async def disconnect(self):
@@ -104,6 +96,6 @@ class Discord_Bot(Bot):
         guild = self.guilds[0]
         channel = guild.get_channel(self.channel_id)
         if channel and isinstance(channel, discord.VoiceChannel):
-            voice_client = guild.voice_client
-            await voice_client.disconnect()
+            client = guild.voice_client
+            await client.disconnect()
         return
