@@ -1,11 +1,10 @@
 import uvicorn
 import threading
 import asyncio
-import time
 
 class Server:
     def __init__(self, app, port: int):
-        self.config = uvicorn.Config(app=app, host="127.0.0.1", port=port, reload=False)
+        self.config = uvicorn.Config(app=app, host="127.0.0.1", port=port, reload=False, access_log=False, log_level="warning")
         self.server = None
         self._ready = threading.Event()
 

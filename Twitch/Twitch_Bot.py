@@ -22,7 +22,7 @@ class Twitch_Bot(AutoBot):
             eventsub.StreamOnlineSubscription(broadcaster_user_id=USER_ID),
         ]
 
-        super().__init__(
+        AutoBot.__init__(self=self,
             client_id=os.environ["TWITCH_CLIENT_ID"],
             client_secret=os.environ["TWITCH_SECRET"],
             bot_id=BOT_ID,
@@ -89,12 +89,13 @@ class ListenerComponent(twitchio.ext.commands.Component):
             print(f"Message filtered from user: {user}")
             return
         
+        msg:TwitchMsg = TwitchMsg(user=user, content=content)
+        print(f"Message created: {msg}")
+        
         if not content.startswith(self.bot._get_prefix):
+            print(f"Rejected message: {msg} due to missing prefix: {self.bot._get_prefix}")
             return
 
-        msg:TwitchMsg = TwitchMsg(user=user, content=content)
-        print(f"Message created: User: {user} Message: {content}")
-
         if self.broadcaster:
-            self.broadcaster.broadcast(msg=msg.to_json())
+            self.broadcaster.broadcast(content=msg.to_json())
         return

@@ -1,8 +1,8 @@
 import logging
 logging.getLogger("transformers.generation.utils").setLevel(logging.ERROR)
 
+import asyncio
 import torch
-import gc
 from transformers import pipeline, TextGenerationPipeline, PreTrainedTokenizer, PreTrainedModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -42,7 +42,9 @@ class AIBot:
             device_map="cuda",
             clean_up_tokenization_spaces=False
         )
-        print(f"{self.model_id} loaded!")
+        print(f"{self.model_id} loaded into {model.device}!")
+        print("Using GPU:", torch.cuda.is_available())
+        print("Model device:", next(model.parameters()).device)
         self.busy = False
 
         return
@@ -53,30 +55,36 @@ class AIBot:
             torch.cuda.empty_cache()
         except Exception:
             pass
-        gc.collect()
         return
 
-    async def generate_response(self, prompt:str, context:str="", temperature=0.7, max_new_tokens=500, raw=False) -> str:
+    async def generate_response(self, prompt:str, context:str="", temperature=0.7, max_new_tokens=100, raw=False) -> str:
         self.busy = True
+        try:
+            if not context:
+                context = '\n'.join(self.context)
 
-        if not context:
-            context = '\n'.join(self.context)
+            if not raw:
+                prompt = f"{context}\n{self.prefix}\n{prompt}.\n{self.suffix}"
 
-        if not raw:
-            prompt = f"{context}\n{self.prefix}\n{prompt}.\n{self.suffix}"
+            # Transformers generation is synchronous; run it in a worker thread.
+            output:list[dict[str, str]] = await asyncio.to_thread(
+                self.text_pipe,
+                prompt,
+                temperature=temperature,
+                max_new_tokens=max_new_tokens,
+            )
 
-        output = self.text_pipe(prompt, temperature=temperature, max_new_tokens=max_new_tokens)
+            #remove the prompt from the output
+            response:str = output[0]['generated_text']
+            response = response.replace(prompt, "").strip()
+            response = response.replace('\n', '')
 
-        if self.context_enabled:
-            self.save_context(message=output)
+            if self.context_enabled:
+                self.save_context(message=response)
 
-        #remove the prompt from the output
-        response:str = output[0]['generated_text']
-        response = response.replace(prompt, "").strip()
-        response = response.replace('\n', '')
-
-        self.busy = False
-        return response
+            return response
+        finally:
+            self.busy = False
 
     def save_context(self, message:str):
         self.context.append(message)

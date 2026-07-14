@@ -1,14 +1,23 @@
+import asyncio
 import discord
 from discord import FFmpegPCMAudio
-from discord.ext.commands import Bot
-from discord.client import VoiceClient
+from discord.ext import commands, voice_recv
+from discord.ext.voice_recv import VoiceRecvClient
+
 from collections import deque 
 
-class Discord_Bot(Bot): 
-    def __init__(self, channel_id:int):
+from STT.STT_Handler import STT_Handler
+from Discord.Discord_STT import Discord_STT
+from lib.Broadcaster import Broadcaster
+
+# https://github.com/imayhaveborkedit/discord-ext-voice-recv
+
+class Discord_Bot(commands.Bot): 
+    def __init__(self, channel_id:int, broadcaster:Broadcaster, stt:STT_Handler | None=None):
         intents = discord.Intents.default()
         intents.voice_states = True
-        Bot.__init__(
+
+        commands.Bot.__init__(
             self=self,
             command_prefix="!",
             intents=intents
@@ -17,6 +26,19 @@ class Discord_Bot(Bot):
         self.play_queue:deque[str] = deque([])
         self.playing:bool = False
         self.channel_id:int = channel_id
+
+        self.broadcaster:Broadcaster = broadcaster
+        self.stt:STT_Handler = stt
+        self.vc:VoiceRecvClient = None
+        self.receiver:Discord_STT = None
+        return
+
+    def __del__(self):
+        asyncio.run(self.disconnect())
+        if self.stt:
+            self.stt.__del__()
+        if self.receiver:
+            self.receiver.__del__()
         return
 
     async def on_ready(self):
@@ -34,21 +56,14 @@ class Discord_Bot(Bot):
 
         if channel and isinstance(channel, discord.VoiceChannel):
             try:
-                await channel.connect()
-                self.voice_client:VoiceClient = self.voice_clients[0]
+                self.vc:VoiceRecvClient = await channel.connect(cls=voice_recv.VoiceRecvClient)
                 print(f"Joined voice channel: {channel.name}")
+                if self.stt:
+                    self.receiver:Discord_STT = Discord_STT(voice_client=self.vc, stt=self.stt, broadcaster=self.broadcaster)
             except Exception as e:
                 print("Failed to connect to voice channel:", type(e).__name__, e)
         else:
             print("Voice channel not found or not a voice channel.")
-        return
-
-    async def on_disconnect(self):
-        print("Discord bot disconnected from gateway")
-        return
-
-    async def on_resumed(self):
-        print("Discord bot resumed gateway session")
         return
 
     async def queue_play(self, file_path:str):
@@ -68,7 +83,7 @@ class Discord_Bot(Bot):
             try:
                 file:str = self.play_queue.popleft()
                 source:FFmpegPCMAudio = FFmpegPCMAudio(file)
-                self.voice_client.play(source=source, after=play_callback)
+                self.vc.play(source=source, after=play_callback)
             except Exception as e:
                 print("Error playing file: " + str(e))
             return
@@ -80,13 +95,13 @@ class Discord_Bot(Bot):
             play()
         return
 
-    async def stop_tts(self):
+    async def stop_audio(self):
         print("Stopping TTS playback and clearing queue")
         self.play_queue.clear()
-        if not self.voice_client:
+        if not self.vc:
             return
-        if self.voice_client.is_playing():
-            self.voice_client.stop()
+        if self.vc.is_playing():
+            self.vc.stop()
         return
 
     async def disconnect(self):

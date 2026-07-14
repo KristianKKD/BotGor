@@ -3,25 +3,33 @@ import asyncio
 
 from dataclasses import dataclass
 
-from lib.API_Comms import post
+from lib.API_REST import post
+from lib.API_Msgs import MSG
 
 @dataclass
 class Listener:
     name:str
     port:int
 
+@dataclass
+class Message:
+    content:dict[str, str]
+    url:str
+
 class Broadcaster:
-    def __init__(self):
+    def __init__(self, name=""):
         self.listeners:list[Listener] = []
-        self.message_queue:deque[dict[str, str]] = deque([])
+        self.message_queue:deque[list[Message]] = deque([])
         self.processing:bool = False
         self.updating:bool = False
+        self.name:str = name
         return
 
     def get_listeners(self) -> dict[str, str]:
         return {listener.name: str(listener.port) for listener in self.listeners}
 
-    def broadcast(self, msg:dict[str, str]):
+    def broadcast(self, content:dict[str, str], url=MSG):
+        msg:Message = Message(content=content, url=url)
         self.message_queue.append(msg)
         if not self.processing:
             asyncio.create_task(self.process_queue())
@@ -45,41 +53,46 @@ class Broadcaster:
 
         while(len(self.message_queue) > 0):
             while(self.updating):
-                asyncio.sleep(0.01)
+                await asyncio.sleep(0.01)
 
-            json:dict[str, str] = self.message_queue.popleft()
-            print(f"Broadcasting: {json}")
+            msg:Message = self.message_queue.popleft()
+            json:dict[str, str] = msg.content
 
             for listener in self.listeners:
-                asyncio.create_task(post(msg="msg", port=listener.port, json=json))
+                print(f"{self.name} is broadcasting: {json} to {listener.name}")
+                asyncio.create_task(post(msg=msg.url, port=listener.port, json=json, name=self.name))
 
         self.processing = False
         return
     
     def find_listener(self, name:str=None, port:int=None):
-        if name is None and port is None:
+        if not name and not port:
             raise ValueError("Must pass name or port when finding listener!")
         
-        if name is None:
+        # FIND BY PORT
+        if not name: 
             for listener in self.listeners:
                 if listener.port == port:
                     return listener
             return None
-        else: # PORT
-            for listener in self.listeners:
-                if listener.name == name:
-                    return listener
-            return None
+        
+        # FIND BY NAME 
+        for listener in self.listeners:
+            if listener.name == name:
+                return listener
+        return None
     
     async def _lock_update_listeners(self, listener:Listener, add:bool):
         self.updating = True
         while(self.processing):
-            asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
 
         if add:
             self.listeners.append(listener)
+            print(f"{self.name} added {listener.name} to listeners!")
         else:
             self.listeners.remove(listener)
+            print(f"{self.name} removed {listener.name} from listeners!")
 
         self.updating = False
         return

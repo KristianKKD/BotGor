@@ -1,11 +1,9 @@
 import asyncio
 from collections import deque 
-import time
 
-from lib.API_Comms import post
-from lib.Environment import find_port
 from lib.Broadcaster import Broadcaster
 from TTS.TTS_Engines.TTS_Base import TTS_Base
+from lib.API_Msgs import PATH_MSG, STOP_MSG
 
 class TTS_Message:
     def __init__(self, engine:TTS_Base, text:str, user:str):
@@ -31,12 +29,13 @@ class TTS_Handler():
         self.processing:bool = False
         self.use_discord:bool = False
         self.broadcaster:Broadcaster = broadcaster
-        
+        self.paused:bool = False
+
         self._voice:str = engine.voice
 
         return
 
-    def set_voice(self, voice:str | int):
+    def set_voice(self, voice:str | int) -> str:
         try:
             voice_index:int = int(voice)
             voices:dict[str, str] = self.engine.get_voices()
@@ -45,15 +44,19 @@ class TTS_Handler():
             pass
 
         self._voice = voice
-        return
+        print(f"Changed voice to:{self._voice}")
+        return self._voice
 
     async def _speak_loop(self):
         while(len(self._tts_in_progress) > 0):
+            if self.paused:
+                return
+            
             tts:TTS_Message = self._tts_in_progress.popleft()
 
             file_path:str = tts.play_message(output_file=self.use_discord)
             if self.use_discord and self.broadcaster:
-                self.broadcaster.broadcast(msg={"path":file_path})
+                self.broadcaster.broadcast(content={PATH_MSG:file_path})
 
         self.processing = False
         return
@@ -66,7 +69,22 @@ class TTS_Handler():
         
         self._tts_in_progress.append(tts)
 
-        if not self.processing:
+        self._start_audio()
+        return
+
+    def pause_audio(self):
+        print("Paused audio")
+        self.paused = True
+        return
+    
+    def resume_audio(self):
+        print("Resumed audio")
+        self.paused = False
+        self._start_audio()
+        return
+
+    def _start_audio(self):
+        if not self.processing and not self.paused:
             self.processing = True
             asyncio.create_task(self._speak_loop())
         return
@@ -78,7 +96,7 @@ class TTS_Handler():
         for tts in self._tts_in_progress:
             tts.stop_audio()
         if self.use_discord:
-            post(msg="stop", port=find_port("DISCORD"))
+            self.broadcaster.broadcast(content={}, msg=STOP_MSG)
 
         self._tts_in_progress.clear()
         return

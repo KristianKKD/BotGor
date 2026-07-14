@@ -1,4 +1,4 @@
-import json
+from lib.API_Msgs import USER, CONTENT
 
 class TwitchMsg():
     def __init__(self, user:str, content:str):
@@ -7,12 +7,14 @@ class TwitchMsg():
         return
 
     def to_json(self) -> dict:
-        return self.__dict__.copy()
+        return {USER:self.user, CONTENT:self.content}
 
     def __str__(self) -> str:
         return str(self.to_json())
 
-if __name__ == "__main__":
-    a = TwitchMsg(user="name", content="data")
-    print(a)
-    print(a.to_json())
+
+def split_message(msg:dict[str, str], key:str=USER, value:str=CONTENT) -> tuple[str, str]:
+    name:str = msg.get(key, "") if key else ""
+    content:str = msg.get(value, "") if value else "" 
+
+    return name, content
