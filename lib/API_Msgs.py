@@ -9,9 +9,12 @@ CONTENT:str = "content"
 
 # TTS/Discord
 PATH_MSG:str = "path"
-STOP_MSG:str = "STOP"
+STOP_MSG:str = "stop"
 
 # Chatbot
 CONTEXT_MSG:str = "context"
 PROMPT_MSG:str = "prompt"
 OUTPUT_MSG:str = "response" 
+
+# Games
+SETUP_MSG:str = "setup"

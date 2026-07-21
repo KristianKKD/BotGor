@@ -28,8 +28,4 @@ def test_handler():
     return
 
 if __name__ == "__main__":
-     (a, b), = {"one":"two"}.items()
-     print(a)
-     print(b)
-
-     asyncio.run(test_handler())
+    asyncio.run(test_handler())

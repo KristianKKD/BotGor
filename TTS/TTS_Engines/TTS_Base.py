@@ -47,17 +47,17 @@ class TTS_Base(ABC):
 
     @abstractmethod
     def stop_audio(self):
-        """Stop TTS engine from outputting audio. Must be implemented by subclasses"""
+        """Stop TTS engine from outputting audio. Must be implemented by subclasses."""
         return
 
     @abstractmethod
     def get_voices(self) -> list[str]:
-        """Print the available voices. Must be implemented by subclasses"""
+        """Print the available voices. Must be implemented by subclasses."""
         return
     
     @abstractmethod
     def select_voice(self, voice:str) -> list[str]:
-        """Set the voice for future TTS audio. Must be implemented by subclasses"""
+        """Set the voice for future TTS audio. Must be implemented by subclasses."""
         return
 
     @abstractmethod

@@ -90,7 +90,9 @@ class TTS_Handler():
         return
 
     async def stop_audio(self):
-        print("Stopping all TTS messages")
+        print(f"Stopping all TTS messages ({len(self._tts_in_progress)})")
+
+        self.pause_audio()
 
         tts:TTS_Message
         for tts in self._tts_in_progress:

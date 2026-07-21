@@ -22,7 +22,7 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
             Simple_UI.__init__(self=self, commands=commands)
         return
     
-    async def handle_msg(self, msg:dict[str, str]):
+    async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
         async def broadcast_response(prompt:str, context:list[str]):
             output:str = await self.ai.generate_response(prompt=prompt, context=context)
             self.broadcaster.broadcast({PROMPT_MSG:prompt, OUTPUT_MSG:output})
@@ -44,12 +44,12 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
         
         return response
         
-    async def close_service(self, _): # Automatically added into the pool of UI commands by default
+    async def close_service(self, _) -> bool: # Automatically added into the pool of UI commands by default
         await Simple_UI.close_service(self=self, _=_)
         self.ai.__del__()
         return False
 
-    async def manual_msg(self, content:str):
+    async def manual_msg(self, content:str) -> bool:
         response:str = await self.ai.generate_response(prompt=content)
         self.broadcaster.broadcast({PROMPT_MSG:content, OUTPUT_MSG:response})
         print(response)

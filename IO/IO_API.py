@@ -17,7 +17,7 @@ class IO_Service(MicroServiceBase, Simple_UI):
             Simple_UI.__init__(self=self)
         return
     
-    async def handle_msg(self, msg:dict[str, str]):
+    async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
         response:str = await super().handle_msg(msg=msg)
 
         user:str

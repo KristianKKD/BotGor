@@ -21,13 +21,13 @@ class TTS_Service(MicroServiceBase, Simple_UI):
             "select": self.select_voice,
         }
     
-        MicroServiceBase.__init__(self, name=APP_NAME, subscription_ports=[find_port("TWITCH"), find_port("CHATBOT")], broadcaster=broadcaster)
+        MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=[find_port("TWITCH"), find_port("CHATBOT"), find_port("GAMES")], broadcaster=broadcaster)
         if ui_enabled:
-            Simple_UI.__init__(self, commands=self.commands)
+            Simple_UI.__init__(self=self, commands=self.commands)
         return
     
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
-        response:dict[str, str] = await super().handle_msg(msg=msg)
+        response:dict[str, str] = MicroServiceBase.handle_msg(self=self, msg=msg)
 
         user:str
         content:str
@@ -41,7 +41,7 @@ class TTS_Service(MicroServiceBase, Simple_UI):
         return response
     
     async def handle_inbound_join(self, req:dict[str, str]) -> dict[str, str]:
-        listeners:dict[str, str] = await super().handle_inbound_join(req)
+        listeners:dict[str, str] = await MicroServiceBase.handle_inbound_join(self=self, req=req)
 
         if not self.tts.use_discord:
             discord_port:int = find_port("DISCORD")
@@ -49,8 +49,7 @@ class TTS_Service(MicroServiceBase, Simple_UI):
         return listeners
 
     async def close_service(self, _) -> bool:
-        await super().close_service(_)
-        self.tts.pause_audio()
+        await Simple_UI.close_service(self=self, _=_)
         await self.tts.stop_audio()
         return False
 

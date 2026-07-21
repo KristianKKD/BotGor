@@ -38,4 +38,5 @@ class Discord_Service(MicroServiceBase, Simple_UI):
         @self.app.post(f"/{STOP_MSG}")
         async def stop_audio(req:dict[str, str]) -> dict[str, str]:
             self.discord_bot.stop_audio()
-            return 
+            return
+        return
