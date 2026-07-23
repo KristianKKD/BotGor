@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BotGor WebUI</title>
+</head>
+<body>
+    <pre id="content"></pre>
+
+    <script>
+        const contentElement = document.getElementById("content");
+
+        async function refreshText() {
+            try {
+                const response = await fetch("/text", {
+                    cache: "no-store",
+                });
+
+                if (!response.ok)
+                    return;
+
+                const text = await response.text();
+                contentElement.textContent = text;
+            } catch (_) {}
+        }
+
+        setInterval(refreshText, 250);
+        refreshText();
+    </script>
+</body>
+</html>

@@ -30,6 +30,7 @@ class Simple_UI():
                 if user_input:
                     print(f"Got: {user_input}")
                 if self._shutting_down_ui or not await self.handle_input(user_input=user_input):
+                    print("Shutting down UI...")
                     break
             except EOFError:
                 break

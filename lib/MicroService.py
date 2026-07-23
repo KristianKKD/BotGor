@@ -56,13 +56,13 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
             service_name:str = msg.get(NAME, "")
             service_port:int = int(msg.get(PORT, 0))
             print(f"{service_name}:{service_port} disconnected and is our subscription!")
-            self.broadcaster.remove_listener(name=service_name, port=service_port)
         except ValueError:
             print(f"Invald disconnect msg: {msg}")
             pass
 
+        print("Attempting to join the listeners again...")
         asyncio.create_task(self.join_listeners(subscription_ports=self._subscription_ports)) # Restart the join process if they are restarting
-        return {NAME: self.name, DISCONNECT: "ok"}
+        return {NAME: self.name, PORT: self.port, DISCONNECT: "ok"}
 
     def service_shutdown(self):
         print(f"Shutting down {self.name}...")

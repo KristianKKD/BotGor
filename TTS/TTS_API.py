@@ -14,7 +14,7 @@ APP_NAME:str = "TTS"
 class TTS_Service(MicroServiceBase, Simple_UI):
     def __init__(self, tts:TTS_Handler, broadcaster:Broadcaster, ui_enabled:bool):
         self.tts:TTS_Handler = tts
-        self.commands:dict[str, Awaitable] = {
+        commands:dict[str, Awaitable] = {
             "tts": self.manual_tts,
             "stoptts": self.stop_tts,
             "voices": self.show_voices,
@@ -23,7 +23,7 @@ class TTS_Service(MicroServiceBase, Simple_UI):
     
         MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=[find_port("TWITCH"), find_port("CHATBOT"), find_port("GAMES")], broadcaster=broadcaster)
         if ui_enabled:
-            Simple_UI.__init__(self=self, commands=self.commands)
+            Simple_UI.__init__(self=self, commands=commands)
         return
     
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:

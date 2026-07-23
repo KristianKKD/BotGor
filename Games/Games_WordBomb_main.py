@@ -24,38 +24,63 @@ class Player:
     def __init__(self, player_name:str, phrases:dict[str, int]=None):
         self.name:str = player_name
         self.triggers:dict[str, str] = phrases if phrases else {}
+        self.seen_triggers:set[str] = {}
         self.damage:int = 0
         return
     
 class WordBomb(Game):
-    def __init__(self, players:list[Player], broadcaster:Broadcaster):
+    def __init__(self, players:list[Player], repeatable_triggers:bool, broadcaster:Broadcaster):
         self.players:list[Player] = players
         self.broadcaster:Broadcaster = broadcaster
+        self.repeatable_triggers:bool = repeatable_triggers
         return
 
     def game_event(self, player:Player, sentence:str):
         lower_sentence:str = sentence.lower().strip()
 
-        total_damage:int = 0
+        found_damage:list[str | int] = []
         found_phrases:list[str] = []
 
+        int_damage:bool = False # Find out if we want to convert the damage
+
         phrase:str
-        damage:str # should be converted to int
+        damage:str # Comes as str, should be converted to int
         for phrase, damage in player.triggers.items():
             if phrase.strip() in lower_sentence:
-                total_damage = total_damage + int(damage)
+                
+                # Check for 'seen' if enabled
+                if not self.repeatable_triggers and phrase in player.seen_triggers:
+                    continue
+                player.seen_triggers.add(phrase)
+
+                # Convert damage type
+                try:
+                    damage = int(damage)
+                    int_damage = True
+                except: # Damage may not be an int, could be a word
+                    pass
+                
+                # Save
+                found_damage.append(damage)
                 found_phrases.append(phrase)
-                print(f"{player.name} said {phrase} for {damage} damage! total:{player.damage}")
+                print(f"{player.name} said {phrase} for {damage}!")
         
-        if total_damage:
-            player.damage = player.damage + total_damage
+        if found_damage:
+            output_phrases:str = ' and '.join(found_phrases)
+            output_damage:str = ' '.join(found_damage)
+
+            if int_damage:
+                total_damage:int = sum(found_damage)
+                output_damage = str(total_damage)
+                player.damage = player.damage + total_damage
+
             # Play tts "player_name said phrase..."
-            self.broadcaster.broadcast({MSG:f"{player.name} said {' and '.join(found_phrases)} for {total_damage} damage!"})
+            self.broadcaster.broadcast({MSG:f"{player.name} said {output_phrases} for {output_damage}!"})
 
         return
     
     def incoming_message(self, msg:dict[str, str]):
-        # msgs should be {'user':'sentence spoken'}
+        # Msgs should be {'user':'sentence spoken'}
         player:Player
         for player in self.players:
             if player.name in msg:
@@ -63,7 +88,7 @@ class WordBomb(Game):
         return
     
     def setup_message(self, msg:dict[str, str]):
-        # msg should be {'name':'player', 'word':'weight', 'word':'weight',...}
+        # Msg should be {'name':'player', 'word':'weight', 'word':'weight',...}
         if not msg or not NAME in msg:
             return
         
@@ -78,7 +103,9 @@ class WordBomb(Game):
 
     def reset_game(self):
         self.stop_game()
-        self.explosions = 0
+        for player in self.players:
+            player.damage = 0
+            player.seen_triggers.clear()
         self.start_game()
         return
     
@@ -90,7 +117,7 @@ async def run_wordbomb(manual_input=False):
     alt_player:Player = Player(player_name="Player2")
 
     broadcaster:Broadcaster = Broadcaster(name="WORDBOMB")
-    wordbomb:WordBomb = WordBomb(players=[krabgor, alt_player], broadcaster=broadcaster)
+    wordbomb:WordBomb = WordBomb(players=[krabgor, alt_player], repeatable_triggers=True, broadcaster=broadcaster)
     service:Games_Service = Games_Service(game=wordbomb, sub_ports=[find_port("DISCORD")], broadcaster=broadcaster, ui_enabled=manual_input)
 
     while not service.shutdown:
