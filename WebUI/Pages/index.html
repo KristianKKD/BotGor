@@ -6,22 +6,32 @@
     <title>BotGor WebUI</title>
 </head>
 <body>
-    <pre id="content"></pre>
+    <div id="content"></div>
 
     <script>
         const contentElement = document.getElementById("content");
 
         async function refreshText() {
             try {
-                const response = await fetch("/text", {
+                const response = await fetch("/text/lines", {
                     cache: "no-store",
                 });
 
                 if (!response.ok)
                     return;
 
-                const text = await response.text();
-                contentElement.textContent = text;
+                const payload = await response.json();
+                const lines = Array.isArray(payload.lines) ? payload.lines : [];
+
+                contentElement.replaceChildren();
+                for (const line of lines) {
+                    const row = document.createElement("div");
+                    row.className = "line";
+                    row.textContent = line.text ?? "";
+                    row.style.fontFamily = line.font || "arial";
+                    row.style.fontSize = `${Number(line.size) || 24}px`;
+                    contentElement.appendChild(row);
+                }
             } catch (_) {}
         }
 

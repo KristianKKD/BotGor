@@ -18,3 +18,7 @@ OUTPUT_MSG:str = "response"
 
 # Games
 SETUP_MSG:str = "setup"
+
+# WebUI
+SIZE_MSG:str = "size"
+FONT_MSG:str = "font"

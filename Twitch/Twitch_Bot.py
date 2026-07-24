@@ -4,14 +4,12 @@ import asyncio
 import twitchio
 from twitchio.ext.commands import Bot, AutoBot, CommandErrorPayload
 from twitchio.ext.commands.exceptions import CommandNotFound
-from twitchio import ChatMessage, eventsub
-from twitchio import authentication, eventsub
+from twitchio import eventsub, ChatMessage, WebsocketWelcome, authentication, TokenRefreshedPayload, SubscriptionRevoked, ChannelPointsAutoRedeemAdd, ChannelPointsRedemptionAdd
 
 from lib.TwitchMsg import TwitchMsg
 from lib.Broadcaster import Broadcaster
 
-#http://localhost:4343/oauth?scopes=user:read:chat%20user:write:chat%20user:bot&force_verify=true
-#http://localhost:4343/oauth?scopes=Amanage%3Abroadcast+moderator%3Aread%3Ashield_mode+moderator%3Amanage%3Aannouncements+channel%3Aread%3Agoals+moderator%3Aread%3Aautomod_settings+moderator%3Amanage%3Aautomod+whispers%3Aedit+moderator%3Aread%3Achat_messages+user%3Aread%3Awhispers+channel%3Amoderate+moderator%3Aread%3Abanned_users+moderator%3Aread%3Amoderators+channel%3Aread%3Astream_key+moderator%3Amanage%3Aunban_requests+analytics%3Aread%3Aextensions+moderator%3Amanage%3Ashoutouts+chat%3Aedit+moderator%3Aread%3Awarnings+analytics%3Aread%3Agames+channel%3Aread%3Asubscriptions+user%3Amanage%3Achat_color+moderator%3Amanage%3Aautomod_settings+moderator%3Aread%3Achat_settings+moderator%3Aread%3Ablocked_terms+channel%3Aread%3Aguest_star+moderator%3Aread%3Avips+user%3Awrite%3Achat+moderation%3Aread+moderator%3Aread%3Asuspicious_users+channel%3Amanage%3Aredemptions+moderator%3Amanage%3Aguest_star+channel%3Aedit%3Acommercial+user%3Aread%3Aemotes+user%3Abot+channel%3Aread%3Avips+user%3Aread%3Afollows+channel%3Aread%3Apolls+channel%3Amanage%3Aads+user%3Aedit%3Abroadcast+channel%3Amanage%3Araids+user%3Aread%3Asubscriptions&force_verify=true
+#http://localhost:4343/oauth?scopes=channel%3Aread%3Aredemptions+user%3Aread%3Achat+user%3Awrite%3Achat+user%3Abot+channel%3Abot&force_verify=true
 
 class Twitch_Bot(AutoBot):
     def __init__(self, filtered_words:list[str], broadcaster:Broadcaster, prefix:str=""):
@@ -19,7 +17,8 @@ class Twitch_Bot(AutoBot):
         BOT_ID = os.environ["TWITCH_BOTGOR_ACCOUNT_ID"]
         subs:eventsub.SubscriptionPayload = [
             eventsub.ChatMessageSubscription(broadcaster_user_id=USER_ID, user_id=BOT_ID),
-            eventsub.StreamOnlineSubscription(broadcaster_user_id=USER_ID),
+            eventsub.ChannelPointsAutoRedeemV2Subscription(broadcaster_user_id=USER_ID),
+            eventsub.ChannelPointsRedeemAddSubscription(broadcaster_user_id=USER_ID)
         ]
 
         AutoBot.__init__(self=self,
@@ -29,7 +28,7 @@ class Twitch_Bot(AutoBot):
             owner_id=USER_ID,
             prefix=prefix,
             subscriptions=subs,
-            force_subscribe=True
+            force_subscribe=True,
         )
 
         self.broadcaster:Broadcaster = broadcaster
@@ -41,18 +40,18 @@ class Twitch_Bot(AutoBot):
         print("Authenticated!")
         await self.add_token(payload.access_token, payload.refresh_token)
         await self.save_tokens()
-
-        if payload.user_id == self.bot_id:
-            return
-
-        chat = eventsub.ChatMessageSubscription(broadcaster_user_id=payload.user_id, user_id=self.bot_id)
-        await self.multi_subscribe([chat])
-        print("Listening to chat!")
+        print("Saved token!")
         return
 
     async def login(self, *, token:str | None = None, load_tokens:bool = True, save_tokens:bool = True):
         print("Logging in to bot...")
-        await super().login(token=token, load_tokens=load_tokens, save_tokens=save_tokens)
+        try:
+            await AutoBot.login(self=self, token=token, load_tokens=load_tokens, save_tokens=save_tokens)
+            if not self.adapter._running:
+                await self.adapter.run()
+        except Exception as error:
+            print(f"[TWITCH AUTH ERROR] Login failed: {error}")
+            raise
         print("Logged in...")
         return
 
@@ -65,10 +64,30 @@ class Twitch_Bot(AutoBot):
         print(f"Successfully logged in as: {self.bot_id}")
         return
 
+    async def event_websocket_welcome(self, payload:WebsocketWelcome):
+        print(f"Successfully connected to channel")
+        return
+
+    async def event_token_refreshed(self, payload:TokenRefreshedPayload):
+        print(f"[TWITCH AUTH] Token refreshed for user_id={payload.user_id} expires_in={payload.expires_in}s")
+        return
+
+    async def event_subscription_revoked(self, payload:SubscriptionRevoked):
+        print(f"[TWITCH AUTH WARNING] Subscription revoked")
+        return
+
+    async def event_error(self, payload:twitchio.EventErrorPayload):
+        print(
+            f"[TWITCH EVENT ERROR] listener={payload.listener.__name__} "
+            f"error={payload.error!r}"
+        )
+        return
+
     async def event_command_error(self, payload:CommandErrorPayload) -> None:
         if isinstance(payload.exception, CommandNotFound):
             return
         raise payload.exception
+    
     
 class ListenerComponent(twitchio.ext.commands.Component):
     def __init__(self, bot:Bot, filtered_words:list[str], broadcaster:Broadcaster) -> None:
@@ -98,4 +117,14 @@ class ListenerComponent(twitchio.ext.commands.Component):
 
         if self.broadcaster:
             self.broadcaster.broadcast(content=msg.to_json())
+        return
+
+    @twitchio.ext.commands.Component.listener()
+    async def event_automatic_redemption_add(self, payload:ChannelPointsAutoRedeemAdd):
+        print(f"Redemption: {payload}")
+        return
+
+    @twitchio.ext.commands.Component.listener()
+    async def event_custom_redemption_add(self, payload:ChannelPointsRedemptionAdd):
+        print(f"Custom redemption: {payload}")
         return

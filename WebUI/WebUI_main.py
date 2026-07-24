@@ -7,11 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import django
 from django.core.asgi import get_asgi_application
 
-from lib.Environment import find_port
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from lib.Environment import load_environment
+from lib.Environment import load_environment, find_port
 from WebUI.WebUI_API import WebUI_Service
 
 async def run_webui(manual_input:bool=False):
