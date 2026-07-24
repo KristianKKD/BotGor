@@ -4,7 +4,7 @@ from lib.MicroService import MicroServiceBase
 from lib.Environment import find_port
 from lib.Service_UI import Simple_UI
 from lib.API_Msgs import CONTEXT_MSG, PROMPT_MSG, OUTPUT_MSG
-from lib.TwitchMsg import split_message
+from Twitch.Twitch_Msg import split_message
 
 from Chatbot.Chatbot_AIBot import AIBot
 

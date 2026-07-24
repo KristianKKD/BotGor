@@ -5,7 +5,7 @@ from lib.MicroService import MicroServiceBase
 from lib.Broadcaster import Broadcaster
 from lib.Service_UI import Simple_UI
 from lib.API_Msgs import PORT, OUTPUT_MSG
-from lib.TwitchMsg import split_message
+from Twitch.Twitch_Msg import split_message
 
 from TTS.TTS_Handler import TTS_Handler
 

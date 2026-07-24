@@ -3,7 +3,7 @@ from pathlib import Path
 
 from lib.MicroService import MicroServiceBase
 from lib.Service_UI import Simple_UI
-from lib.TwitchMsg import split_message
+from Twitch.Twitch_Msg import split_message
 from lib.API_Msgs import SIZE_MSG, FONT_MSG
 
 from django.http import HttpResponse
@@ -52,11 +52,11 @@ class WebUI_Service(MicroServiceBase, Simple_UI):
     def __init__(self, subscription_ports:list[int], ui_enabled:bool):
         WebUI_Service.shown_text:list[Font] = []
 
-        commands:dict[str, Awaitable] = {"text":self.display_text}
+        # commands:dict[str, Awaitable] = {"text":self.display_text}
 
         MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=subscription_ports)
-        if ui_enabled:
-            Simple_UI.__init__(self=self, commands=commands)
+        # if ui_enabled:
+        #     Simple_UI.__init__(self=self, commands=commands)
         return
 
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
@@ -66,12 +66,16 @@ class WebUI_Service(MicroServiceBase, Simple_UI):
         content:str
         user, content = split_message(msg=msg)
 
-        size:str = msg.get(SIZE_MSG, None)
-        font_name:str = msg.get(FONT_MSG, None)
+        font_name:str = msg.get(FONT_MSG, "")
+
+        size:int = 0
+        try:
+            size = int(msg.get(SIZE_MSG, 0))
+        except:
+            pass
 
         if content:
             self.add_text(self.create_font(text=content, size=size, font_name=font_name))
-            WebUI_Service.latest_shown_text = content
 
         return response
 
@@ -83,5 +87,5 @@ class WebUI_Service(MicroServiceBase, Simple_UI):
         return
 
     async def display_text(self, text:str) -> bool:
-        self.add_text(self.create_font(text=text))
+        self.add_text(self.create_font(text=text, font_name=""))
         return True

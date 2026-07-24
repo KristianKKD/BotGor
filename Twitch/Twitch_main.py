@@ -1,6 +1,8 @@
 import os
 import asyncio
 import sys
+import json
+from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -8,7 +10,8 @@ from lib.Environment import load_environment
 from Twitch.Twitch_Bot import Twitch_Bot
 from Twitch.Twitch_API import Twitch_Service
 
-FILTER_PATH:str = "censoredwords"
+FILTER_PATH:str = "Twitch/censoredwords"
+CHATTER_PATH:str = "Twitch/chatterdata.json"
 PREFIX:str = ""
 
 async def run_twitch(manual_input:bool=False):
@@ -24,7 +27,7 @@ async def run_twitch(manual_input:bool=False):
 def load_filtered_words(path:str):
     slurs:list[str] = []
     if os.path.exists(path):
-        with open(FILTER_PATH, "r") as f:
+        with open(path, "r") as f:
             slurs = [line.strip().lower() for line in f if line.strip()]
     return slurs
 

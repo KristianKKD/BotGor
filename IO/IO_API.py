@@ -1,7 +1,7 @@
 from lib.MicroService import MicroServiceBase
 from lib.Environment import find_port
 from lib.Service_UI import Simple_UI
-from lib.TwitchMsg import split_message
+from Twitch.Twitch_Msg import split_message
 
 from IO.IO_Handler import IO_Handler
 

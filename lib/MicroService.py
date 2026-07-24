@@ -119,13 +119,21 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         
         @self.app.post(f"/{JOIN}")
         async def join(req:dict[str, str]) -> dict[str, str]:
-            return await self.handle_inbound_join(req=req)
+            try:
+                return await self.handle_inbound_join(req=req)
+            except:
+                raise ValueError(f"{self.name} received an invalid {JOIN} msg! {req}")
 
         @self.app.post(f"/{MSG}")
         async def receive_msg(msg:dict[str, str]) -> dict[str, str]:
-            return await self.handle_msg(msg=msg)
+            try:
+                return await self.handle_msg(msg=msg)
+            except:
+                raise ValueError(f"{self.name} received an invalid {MSG} msg! {msg}")
         
         @self.app.post(f"/{DISCONNECT}")
         async def disconnect(msg:dict[str, str]) -> dict[str, str]:
-            return await self.handle_disconnect(msg=msg)
-        return
+            try:
+                return await self.handle_disconnect(msg=msg)
+            except:
+                raise ValueError(f"{self.name} received an invalid {DISCONNECT} msg! {msg}")

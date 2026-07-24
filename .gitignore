@@ -8,3 +8,4 @@ censoredwords
 .tio.tokens.json
 .pytest*
 testing.py
+userdata*

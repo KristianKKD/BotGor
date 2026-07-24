@@ -10,6 +10,39 @@
 
     <script>
         const contentElement = document.getElementById("content");
+        const defaultFontStack = '"Arial", "Segoe UI", sans-serif';
+        const fontExistsCache = new Map();
+
+        function normalizeFontName(fontName) {
+            if (typeof fontName !== "string")
+                return "";
+
+            const cleaned = fontName.trim().replace(/["']/g, "");
+            return cleaned;
+        }
+
+        function buildFontStack(fontName) {
+            if (!fontName)
+                return defaultFontStack;
+
+            return `"${fontName}", ${defaultFontStack}`;
+        }
+
+        async function getSafeFontFamily(fontName) {
+            const normalized = normalizeFontName(fontName);
+            if (!normalized)
+                return defaultFontStack;
+
+            if (!document.fonts || typeof document.fonts.check !== "function")
+                return buildFontStack(normalized);
+
+            if (!fontExistsCache.has(normalized)) {
+                const exists = document.fonts.check(`16px "${normalized}"`);
+                fontExistsCache.set(normalized, exists);
+            }
+
+            return fontExistsCache.get(normalized) ? buildFontStack(normalized) : defaultFontStack;
+        }
 
         async function refreshText() {
             try {
@@ -28,7 +61,7 @@
                     const row = document.createElement("div");
                     row.className = "line";
                     row.textContent = line.text ?? "";
-                    row.style.fontFamily = line.font || "arial";
+                    row.style.fontFamily = await getSafeFontFamily(line.font);
                     row.style.fontSize = `${Number(line.size) || 24}px`;
                     contentElement.appendChild(row);
                 }
