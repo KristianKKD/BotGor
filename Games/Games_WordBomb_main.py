@@ -5,7 +5,7 @@ import asyncio
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.Environment import find_port, load_environment
-from lib.API_Msgs import NAME, MSG
+from lib.API_Msgs import NAME_KEY, MSG_MSG
 from lib.Broadcaster import Broadcaster
 
 from Games.Games_Game import Game
@@ -75,7 +75,7 @@ class WordBomb(Game):
                 player.damage = player.damage + total_damage
 
             # Play tts "player_name said phrase..."
-            self.broadcaster.broadcast({MSG:f"{player.name} said {output_phrases} for {output_damage}!"})
+            self.broadcaster.broadcast({MSG_MSG:f"{player.name} said {output_phrases} for {output_damage}!"})
 
         return
     
@@ -89,10 +89,10 @@ class WordBomb(Game):
     
     def setup_message(self, msg:dict[str, str]):
         # Msg should be {'name':'player', 'word':'weight', 'word':'weight',...}
-        if not msg or not NAME in msg:
+        if not msg or not NAME_KEY in msg:
             return
         
-        found_name:str = msg.pop(NAME).lower()
+        found_name:str = msg.pop(NAME_KEY).lower()
         
         player:Player
         for player in self.players:

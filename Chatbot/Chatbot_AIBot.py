@@ -12,7 +12,8 @@ class AIBot:
                  prefix:str= "A viewer says:",
                  suffix:str="Here is your reply:",
                  initial_prompt:str="",
-                 enable_context:bool=False
+                 enable_context:bool=False,
+                 hugging_face_token:str="",
                  ):
         
         self.model_id:str = model_id
@@ -28,7 +29,7 @@ class AIBot:
 
         print(f"Loading {self.model_id}...")
         model:PreTrainedModel = AutoModelForCausalLM.from_pretrained(
-            self.model_id, torch_dtype="auto", cache_dir=MODEL_PATH, device_map="cuda",
+            self.model_id, torch_dtype="auto", cache_dir=MODEL_PATH, device_map="cuda"
         )
         tokenizer:PreTrainedTokenizer = AutoTokenizer.from_pretrained(
             self.model_id, cache_dir=MODEL_PATH

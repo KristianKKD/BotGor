@@ -1,24 +1,25 @@
 # Microservice
-DISCONNECT:str = "disconnect"
-JOIN:str = "join"
-MSG:str = "msg"
-NAME:str = "name"
-PORT:str = "port"
-USER:str = "user"
-CONTENT:str = "content"
+DISCONNECT_MSG:str = "disconnect"
+JOIN_MSG:str = "join"
+MSG_MSG:str = "msg"
+NAME_KEY:str = "name"
+PORT_KEY:str = "port"
+USER_KEY:str = "user"
+CONTENT_KEY:str = "content"
+HEARTBEAT_MSG:str = "heartbeat"
 
 # TTS/Discord
-PATH_MSG:str = "path"
+PATH_KEY:str = "path"
 STOP_MSG:str = "stop"
 
 # Chatbot
-CONTEXT_MSG:str = "context"
-PROMPT_MSG:str = "prompt"
-OUTPUT_MSG:str = "response" 
+CONTEXT_KEY:str = "context"
+PROMPT_KEY:str = "prompt"
+RESPONSE_KEY:str = "response" 
 
 # Games
 SETUP_MSG:str = "setup"
 
 # WebUI
-SIZE_MSG:str = "size"
-FONT_MSG:str = "font"
+SIZE_KEY:str = "size"
+FONT_KEY:str = "font"

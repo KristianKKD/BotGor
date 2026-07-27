@@ -18,7 +18,7 @@ async def run_tts(manual_input:bool=False):
     
     tts_engine:TTS_Base = TTS_System(voice="Microsoft David Desktop - English (United States)")
     #old botgor: xJ6quMToF3QzDncP3TLF
-    #tts_engine:TTS_Base = ElevenLabsTTS(api_key=os.environ["ELEVEN_LABS_KEY"], voice="mrQhZWGbb2k9qWJb5qeA")
+    #tts_engine:TTS_Base = ElevenLabsTTS(api_key=os.environ["ELEVEN_LABS_KEY"], voice="xJ6quMToF3QzDncP3TLF")
     
     broadcaster:Broadcaster = Broadcaster(name="TTS")
     

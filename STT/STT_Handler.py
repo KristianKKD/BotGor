@@ -1,6 +1,6 @@
 from STT.STT_Whisper import WhisperTranscriber
 from STT.STT_Recorder import AudioRecorder
-from lib.API_Msgs import OUTPUT_MSG, USER
+from lib.API_Msgs import RESPONSE_KEY, USER_KEY
 
 class STT_Handler():
     def __init__(self, model:WhisperTranscriber, recorder:AudioRecorder | None=None):
@@ -21,4 +21,4 @@ class STT_Handler():
         return self.speech_to_text(audio_data=audio_data)
     
     def speech_to_text_json(self, audio_data:bytes, user:str="User") -> dict[str, str]:
-        return {USER:user, OUTPUT_MSG:self.speech_to_text(audio_data=audio_data, user=user)}
+        return {USER_KEY:user, RESPONSE_KEY:self.speech_to_text(audio_data=audio_data, user=user)}

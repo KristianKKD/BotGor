@@ -4,7 +4,7 @@ import asyncio
 from dataclasses import dataclass
 
 from lib.API_REST import post
-from lib.API_Msgs import MSG
+from lib.API_Msgs import MSG_MSG
 
 @dataclass
 class Listener:
@@ -28,7 +28,8 @@ class Broadcaster:
     def get_listeners(self) -> dict[str, str]:
         return {listener.name: str(listener.port) for listener in self.listeners}
 
-    def broadcast(self, content:dict[str, str], url=MSG):
+    def broadcast(self, content:dict[str, str], url=MSG_MSG):
+        """Add a message to the queue to be broadcasted to all listeners"""
         msg:Message = Message(content=content, url=url)
         self.message_queue.append(msg)
         if not self.processing:

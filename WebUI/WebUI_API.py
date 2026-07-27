@@ -3,8 +3,8 @@ from pathlib import Path
 
 from lib.MicroService import MicroServiceBase
 from lib.Service_UI import Simple_UI
-from Twitch.Twitch_Msg import split_message
-from lib.API_Msgs import SIZE_MSG, FONT_MSG
+from lib.User_Msg import split_message
+from lib.API_Msgs import SIZE_KEY, FONT_KEY, RESPONSE_KEY
 
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -48,15 +48,17 @@ class Font:
     def __str__(self):
         return self.text
 
+MAX_LINES_SHOWN:int = 20
+
 class WebUI_Service(MicroServiceBase, Simple_UI):
     def __init__(self, subscription_ports:list[int], ui_enabled:bool):
         WebUI_Service.shown_text:list[Font] = []
 
-        # commands:dict[str, Awaitable] = {"text":self.display_text}
+        commands:dict[str, Awaitable] = {"text":self.display_text}
 
         MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=subscription_ports)
-        # if ui_enabled:
-        #     Simple_UI.__init__(self=self, commands=commands)
+        if ui_enabled:
+            Simple_UI.__init__(self=self, commands=commands)
         return
 
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
@@ -65,17 +67,18 @@ class WebUI_Service(MicroServiceBase, Simple_UI):
         user:str
         content:str
         user, content = split_message(msg=msg)
+        content = content if content else msg.get(RESPONSE_KEY, "")
 
-        font_name:str = msg.get(FONT_MSG, "")
+        font_name:str = msg.get(FONT_KEY, "")
 
         size:int = 0
         try:
-            size = int(msg.get(SIZE_MSG, 0))
+            size = int(msg.get(SIZE_KEY, 0))
         except:
             pass
 
         if content:
-            self.add_text(self.create_font(text=content, size=size, font_name=font_name))
+            self.add_text(self.create_font(text=f"{user}: {content}", size=size, font_name=font_name))
 
         return response
 
@@ -83,6 +86,8 @@ class WebUI_Service(MicroServiceBase, Simple_UI):
         return Font(text=text, size=size, font_name=font_name)
 
     def add_text(self, font:Font):
+        while(len(self.shown_text) >= MAX_LINES_SHOWN):
+            self.shown_text.pop(0)
         WebUI_Service.shown_text.append(font)
         return
 

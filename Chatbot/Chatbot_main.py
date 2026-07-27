@@ -12,6 +12,7 @@ from Chatbot.Chatbot_API import Chatbot_Service
 CONTEXT_ENABLED:bool = False
 TRIGGER:str = ""
 MODEL_ID:str = "google/gemma-3-4b-it"
+#MODEL_ID:str = "google/gemma-3-1b-it"
 PROMPT_PREFIX:str = "A viewer says:"
 PROMPT_SUFFIX:str = "Here is my reply:"
 
@@ -30,7 +31,8 @@ async def run_ai(manual_input:bool=False):
                      prefix=PROMPT_PREFIX,
                      suffix=PROMPT_SUFFIX,
                      initial_prompt=INITIAL_PROMPT,
-                     enable_context=CONTEXT_ENABLED
+                     enable_context=CONTEXT_ENABLED,
+                     hugging_face_token=os.environ["HUGGING_FACE_TOKEN"]
                      )
     service:Chatbot_Service = Chatbot_Service(ai=ai, ui_enabled=manual_input)
 

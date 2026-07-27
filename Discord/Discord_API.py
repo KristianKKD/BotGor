@@ -5,7 +5,7 @@ from lib.Service_UI import Simple_UI
 from lib.Environment import find_port
 
 from Discord.Discord_Bot import Discord_Bot
-from lib.API_Msgs import PATH_MSG, STOP_MSG
+from lib.API_Msgs import PATH_KEY, STOP_MSG
 from lib.Broadcaster import Broadcaster
 
 APP_NAME:str = "DISCORD"
@@ -23,7 +23,7 @@ class Discord_Service(MicroServiceBase, Simple_UI):
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
         response:dict[str, str] = await MicroServiceBase.handle_msg(self=self, msg=msg)
 
-        file_path:str = msg.get(PATH_MSG, "")
+        file_path:str = msg.get(PATH_KEY, "")
         if file_path and os.path.exists(file_path):
             print(f"Playing msg:{file_path}")
             await self.discord_bot.queue_play(file_path=file_path)

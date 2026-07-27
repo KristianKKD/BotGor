@@ -1,13 +1,13 @@
 import httpx
 import time
-from lib.API_Msgs import JOIN
+from lib.API_Msgs import JOIN_MSG
 
 BASE_IP:str = "http://localhost"
 
 async def post(msg:str, port:int, json:dict[str, str]={}, timeout:int=10, name="") -> str:
     url = f"{BASE_IP}:{str(port)}/{msg}"
     response:dict[str, str] = {}
-    if msg is not JOIN:
+    if msg is not JOIN_MSG:
         print(f"{name} Sending: {url} - {json} | time:{time.time()}")
     async with httpx.AsyncClient() as client:
         try:

@@ -16,7 +16,7 @@ async def run_webui(manual_input:bool=False):
     django.conf.settings.configure(SECRET_KEY=os.environ["DJANGO_SECRET_KEY"], DEBUG=True, ROOT_URLCONF="WebUI.WebUI_API")
     django.setup()
 
-    service:WebUI_Service = WebUI_Service(subscription_ports=[find_port("TWITCH")], ui_enabled=manual_input)
+    service:WebUI_Service = WebUI_Service(subscription_ports=[find_port("TWITCH"), find_port("DISCORD"), find_port("CHATBOT")], ui_enabled=manual_input)
     service.app.mount("/", get_asgi_application()) # Mount the Django port to the FastAPI port
 
     while not service.shutdown:

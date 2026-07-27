@@ -3,8 +3,8 @@ import asyncio
 from lib.MicroService import MicroServiceBase
 from lib.Environment import find_port
 from lib.Service_UI import Simple_UI
-from lib.API_Msgs import CONTEXT_MSG, PROMPT_MSG, OUTPUT_MSG
-from Twitch.Twitch_Msg import split_message
+from lib.API_Msgs import CONTEXT_KEY, PROMPT_KEY, RESPONSE_KEY, USER_KEY
+from lib.User_Msg import split_message
 
 from Chatbot.Chatbot_AIBot import AIBot
 
@@ -14,7 +14,7 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
     def __init__(self, ai:AIBot, ui_enabled:bool):
         self.ai:AIBot = ai
 
-        MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=[find_port("DISCORD")])
+        MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=[find_port("DISCORD"), find_port("TWITCH")])
 
         commands = {"msg": self.manual_msg}
 
@@ -25,21 +25,21 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
         async def broadcast_response(prompt:str, context:list[str]):
             output:str = await self.ai.generate_response(prompt=prompt, context=context)
-            self.broadcaster.broadcast({PROMPT_MSG:prompt, OUTPUT_MSG:output})
+            self.broadcaster.broadcast({PROMPT_KEY:prompt, USER_KEY:APP_NAME, RESPONSE_KEY:output})
             return
 
         response:str = await MicroServiceBase.handle_msg(self=self, msg=msg)
         if self.ai.busy:
-            return {OUTPUT_MSG: 'Error: Model is busy, please try again.'}
+            return {RESPONSE_KEY: 'Error: Model is busy, please try again.'}
 
         user:str
         content:str
         user, content = split_message(msg=msg)
-        if not content: content = msg.get(OUTPUT_MSG, "")
-        if user and content:
+        if not content: content = msg.get(RESPONSE_KEY, "")
+        if user and content and not user == APP_NAME:
             if not self.ai.trigger or content.startswith(self.ai.trigger):
                 prompt:str = self.ai.create_prompt(user=user, content=content)
-                context:list[str] = msg.get(CONTEXT_MSG, [])
+                context:list[str] = msg.get(CONTEXT_KEY, [])
                 asyncio.create_task(broadcast_response(prompt=prompt, context=context))
         
         return response
@@ -51,6 +51,6 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
 
     async def manual_msg(self, content:str) -> bool:
         response:str = await self.ai.generate_response(prompt=content)
-        self.broadcaster.broadcast({PROMPT_MSG:content, OUTPUT_MSG:response})
+        self.broadcaster.broadcast({PROMPT_KEY:content, RESPONSE_KEY:response})
         print(response)
         return True

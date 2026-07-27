@@ -4,8 +4,8 @@ from lib.Environment import find_port
 from lib.MicroService import MicroServiceBase
 from lib.Broadcaster import Broadcaster
 from lib.Service_UI import Simple_UI
-from lib.API_Msgs import PORT, OUTPUT_MSG
-from Twitch.Twitch_Msg import split_message
+from lib.API_Msgs import PORT_KEY, RESPONSE_KEY
+from lib.User_Msg import split_message
 
 from TTS.TTS_Handler import TTS_Handler
 
@@ -27,12 +27,12 @@ class TTS_Service(MicroServiceBase, Simple_UI):
         return
     
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
-        response:dict[str, str] = MicroServiceBase.handle_msg(self=self, msg=msg)
+        response:dict[str, str] = await MicroServiceBase.handle_msg(self=self, msg=msg)
 
         user:str
         content:str
         user, content = split_message(msg=msg)
-        if not content: content = msg.get(OUTPUT_MSG, "")
+        if not content: content = msg.get(RESPONSE_KEY, "")
         user = user or "Chatbot"
 
         if user and content:
@@ -45,7 +45,7 @@ class TTS_Service(MicroServiceBase, Simple_UI):
 
         if not self.tts.use_discord:
             discord_port:int = find_port("DISCORD")
-            self.tts.use_discord = str(discord_port) == req.get(PORT, "")
+            self.tts.use_discord = str(discord_port) == req.get(PORT_KEY, "")
         return listeners
 
     async def close_service(self, _) -> bool:
@@ -54,7 +54,7 @@ class TTS_Service(MicroServiceBase, Simple_UI):
         return False
 
     async def stop_tts(self, _) -> bool:
-        self.tts.stop_audio()
+        await self.tts.stop_audio()
         return True
 
     async def manual_tts(self, content:str) -> bool:

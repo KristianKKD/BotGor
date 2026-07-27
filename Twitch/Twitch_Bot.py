@@ -7,8 +7,8 @@ from twitchio.ext.commands.exceptions import CommandNotFound
 from twitchio import eventsub, authentication
 from twitchio import ChatMessage, WebsocketWelcome, SubscriptionRevoked, ChannelPointsAutoRedeemAdd, ChannelPointsRedemptionAdd
 
-from Twitch.Twitch_Msg import TwitchMsg
-from Twitch.Twitch_User import TwitchUserSettings
+from lib.User_Msg import UserMsg
+from lib.User_Chatter import UserSettings
 from lib.Broadcaster import Broadcaster
 
 #http://localhost:4343/oauth?scopes=channel%3Aread%3Aredemptions+user%3Aread%3Achat+user%3Awrite%3Achat+user%3Abot+channel%3Abot&force_verify=true
@@ -85,7 +85,7 @@ class ListenerComponent(twitchio.ext.commands.Component):
         self.bot:Bot = bot
         self.filtered_words:list[str] = filtered_words
         self.broadcaster:Broadcaster = broadcaster
-        self.users:dict[str, TwitchUserSettings] = {}
+        self.users:dict[str, UserSettings] = {}
         print("Creating listener component!")
         return
 
@@ -106,7 +106,7 @@ class ListenerComponent(twitchio.ext.commands.Component):
             font = self.users[username].font
             font_size = self.users[username].font_size
         
-        msg:TwitchMsg = TwitchMsg(user=username, content=content, font=font, font_size=font_size)
+        msg:UserMsg = UserMsg(user=username, content=content, font=font, font_size=font_size)
         print(f"Message created: {msg}")
         
         if not content.startswith(self.bot._get_prefix):
@@ -132,6 +132,6 @@ class ListenerComponent(twitchio.ext.commands.Component):
 
         if redeem_name == "Change my BotGor font":
             print(f"{username} is changing their font to: {redeem_name}")
-            self.users[username] = TwitchUserSettings(name=username, font_name=redeem_text)
+            self.users[username] = UserSettings(name=username, font_name=redeem_text)
 
         return

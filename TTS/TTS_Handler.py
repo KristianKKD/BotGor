@@ -3,7 +3,7 @@ from collections import deque
 
 from lib.Broadcaster import Broadcaster
 from TTS.TTS_Engines.TTS_Base import TTS_Base
-from lib.API_Msgs import PATH_MSG, STOP_MSG
+from lib.API_Msgs import PATH_KEY, STOP_MSG
 
 class TTS_Message:
     def __init__(self, engine:TTS_Base, text:str, user:str):
@@ -56,7 +56,7 @@ class TTS_Handler():
 
             file_path:str = tts.play_message(output_file=self.use_discord)
             if self.use_discord and self.broadcaster:
-                self.broadcaster.broadcast(content={PATH_MSG:file_path})
+                self.broadcaster.broadcast(content={PATH_KEY:file_path})
 
         self.processing = False
         return

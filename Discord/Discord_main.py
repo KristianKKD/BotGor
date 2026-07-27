@@ -35,5 +35,5 @@ async def run_discord(manual_input:bool=False, channel_override:int=None, stt_en
     return
 
 if __name__ == "__main__":
-    asyncio.run(run_discord(manual_input=True, channel_override=471406637643464724))
+    asyncio.run(run_discord(manual_input=True))
     
