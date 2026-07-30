@@ -1,13 +1,17 @@
 from typing import Awaitable
 from pathlib import Path
-
-from lib.MicroService import MicroServiceBase
-from lib.Service_UI import Simple_UI
-from lib.API_Msgs import SIZE_KEY, FONT_KEY, RESPONSE_KEY, NAME_KEY, CONTENT_KEY
+import asyncio
 
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.urls import path
+
+from lib.MicroService import MicroServiceBase
+from lib.Service_UI import Simple_UI
+from lib.API_Msgs import SIZE_KEY, FONT_KEY, RESPONSE_KEY, NAME_KEY, CONTENT_KEY
+import Database.Database_API
+from Database.Database_User import User, Setting
+
 
 APP_NAME:str = "WEBUI"
 INDEX_PAGE_PATH:Path = (Path(__file__).parent / "Pages" / "index.html")
@@ -59,20 +63,21 @@ class WebUI_Service(MicroServiceBase, Simple_UI):
         return
 
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
+        async def display_text(username:str, content:str):
+            user_data:User = await Database.Database_API.get_user(username=name)
+            font_name:str = user_data.get(key=FONT_KEY)
+            font_size:str = user_data.get(key=SIZE_KEY, expected_type=int)
+
+            self.add_text(self.create_font(text=f"{name}: {content}", size=font_size, font_name=font_name))
+            return
+        
         response:dict[str, str] = await MicroServiceBase.handle_msg(self=self, msg=msg)
 
-        user:str = msg.get(NAME_KEY, "")
-        content = msg.get(CONTENT_KEY, msg.get(RESPONSE_KEY, ""))
-        font_name:str = msg.get(FONT_KEY, "")
-
-        size:int = 0
-        try:
-            size = int(msg.get(SIZE_KEY, 0))
-        except:
-            pass
+        name:str = msg.get(NAME_KEY, "")
+        content:str = msg.get(CONTENT_KEY, msg.get(RESPONSE_KEY, ""))
 
         if content:
-            self.add_text(self.create_font(text=f"{user}: {content}", size=size, font_name=font_name))
+            asyncio.create_task(display_text(username=name, content=content))
 
         return response
 

@@ -9,3 +9,4 @@ censoredwords
 .pytest*
 testing.py
 userdata*
+manuallaunch.py

@@ -1,5 +1,7 @@
 from typing import Any
 from Database.Database_User import User
+from Database.Database_Setting import Setting
+from dataclasses import asdict
 
 class Database_UserManager:
     def __init__(self):
@@ -11,17 +13,25 @@ class Database_UserManager:
         print(f"Found user: {str(user) if user else 'NOT FOUND'}")
         return user if user else None
     
-    def add_user(self, new_user:User):
-        if not new_user.name in self._users:
-            print(f"Adding {str(new_user)}")
+    def add_user(self, new_user:User) -> User:
+        if new_user.name not in self._users:
             self._users[new_user.name] = new_user
         else:
             old_user:User = self._users[new_user.name]
-            print(f"Modifying {str(old_user)} to {str(new_user)}")
-            for attr, value in vars(new_user).items():
-                if value:
-                    setattr(old_user, attr, value)
-        return
+
+            new_setting:Setting
+            for new_setting in new_user.settings:
+                old_setting:Setting = next((setting for setting in old_user.settings 
+                                           if type(setting) == type(new_setting)), None)
+
+                if old_setting: # If we already have that kind of settings, modify
+                    for attr, value in asdict(new_setting).items():
+                        if value:
+                            setattr(old_setting, attr, value)
+
+                else: # Incoming new settings
+                    old_user.settings.append(new_setting)
+        return new_user
 
     def remove_user(self, name:str) -> User | None:
         print(f"Removing {name}")

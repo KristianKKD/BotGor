@@ -9,7 +9,7 @@ from lib.Environment import load_environment
 from Database.Database_Manager import Database_UserManager
 from Database.Database_API import Database_Service
 
-async def run_io(manual_input:bool=False):
+async def run_database(manual_input:bool=False):
     load_environment()
 
     manager:Database_UserManager = Database_UserManager()
@@ -20,5 +20,5 @@ async def run_io(manual_input:bool=False):
     return
 
 if __name__ == "__main__":
-    asyncio.run(run_io(manual_input=True))
+    asyncio.run(run_database(manual_input=True))
     

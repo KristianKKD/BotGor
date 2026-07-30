@@ -1,49 +1,61 @@
-from dataclasses import dataclass
-from lib.API_Msgs import NAME_KEY, FONT_KEY, SIZE_KEY, NAME_KEY, CONTENT_KEY
-
-@dataclass(slots=True)
-class UserMsg():
-    name:str
-    content:str
-    font:str = ""
-    font_size:int = 0
-
-    def to_json(self) -> dict[str, str]:
-        return {
-                NAME_KEY:self.name, 
-                CONTENT_KEY:self.content,
-                FONT_KEY:self.font,
-                SIZE_KEY:str(self.font_size)
-                }
-
-    def __str__(self) -> str:
-        return str(self.to_json())
+import json
+from typing import Any
+from lib.API_Msgs import NAME_KEY, CONTENT_KEY
+from Database.Database_Setting import Setting, TwitchSettings
 
 class User:
-    def __init__(self, name:str="", font:str="", font_size:int=0, data:dict[str, str]=None):
+    def __init__(self, name:str="", settings:list[Setting]=None, data:dict[str, str]=None):
+        self.name:str = name
+
+        if settings and not isinstance(settings, list):
+            settings = [settings]
+        self.settings = settings if settings else []
+
         if data:
             self._load_data(data=data)
-            return
 
-        if not name:
+        if not self.name:
             raise ValueError("Must provide name or data to user!")
-        
-        self.name:str = name
-        self.font:str = font
-        self.font_size:int = font_size
         return
 
     def _load_data(self, data:dict[str, str]):
         self.name = data.get(NAME_KEY, "")
-        self.font:str = data.get(FONT_KEY, "")
+
+        # Convert the data from CONTENT: {data} to just {data}
         try:
-            self.font_size:int = int(data.get(SIZE_KEY, 0))
+            content = json.loads(data['content'].replace("'", '"'))
+            data.update(content)
         except:
-            self.font_size:int = 0
+            pass
+
+        known_setting_class:list[Setting] = [TwitchSettings] # list of classes that inherit from Setting
+
+        # Re-construct an object from json data based on known setting types
+        setting_class:Setting
+        for setting_class in known_setting_class:
+            setting:Setting = setting_class.from_json(data)
+            if setting:
+                self.settings.append(setting)
+
         return
 
+    def get(self, key:str, expected_type:type=None) -> Any | None:
+        data:dict[str, Any] = self.to_json()
+        value:Any | None = data.get(key, None)
+        if expected_type:
+            old_type:type = type(value)
+            try:
+                value = expected_type(value)
+            except:
+                print(f"Failed to convert {key}:{value} to {str(expected_type)} from {str(old_type)}")
+                value = None
+        return value
+
     def to_json(self) -> dict[str, str]:
-        return {NAME_KEY:self.name, FONT_KEY:self.font, SIZE_KEY:str(self.font_size)}
+        data:dict[str, Any] = {NAME_KEY: self.name}
+        for setting in self.settings:
+            data.update(setting.to_json())  # merge each setting dict
+        return data
     
     def __str__(self) -> str:
         return str(self.to_json())

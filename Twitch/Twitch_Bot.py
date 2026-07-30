@@ -10,8 +10,10 @@ from twitchio import ChatMessage, WebsocketWelcome, SubscriptionRevoked, Channel
 
 from lib.Broadcaster import Broadcaster
 import Database.Database_API
-from Database.Database_User import UserMsg, User
-from lib.API_Msgs import CONTENT_KEY
+from Database.Database_User import User
+from Database.Database_Setting import TwitchSettings
+from Twitch.Twitch_Msg import TwitchMsg
+from lib.API_Msgs import FONT_KEY, SIZE_KEY
 
 #http://localhost:4343/oauth?scopes=channel%3Aread%3Aredemptions+user%3Aread%3Achat+user%3Awrite%3Achat+user%3Abot+channel%3Abot&force_verify=true
 
@@ -101,16 +103,10 @@ class ListenerComponent(twitchio.ext.commands.Component):
             print(f"Message filtered from user: {username}")
             return
 
-        font:str = ""
-        font_size:int = 0
-        user_data:User = await Database.Database_API.get_user(username=username)
-        if user_data:
-            font = user_data.font
-            font_size = user_data.font_size
-        else:
-            asyncio.create_task(Database.Database_API.add_user(User(name=username)))
+        # Add the user to the database if not already there
+        asyncio.create_task(Database.Database_API.add_user(User(name=username)))
         
-        msg:UserMsg = UserMsg(name=username, content=content, font=font, font_size=font_size)
+        msg:TwitchMsg = TwitchMsg(name=username, content=content)
         print(f"Message created: {msg}")
         
         if not content.startswith(self.bot._get_prefix):
@@ -136,6 +132,7 @@ class ListenerComponent(twitchio.ext.commands.Component):
 
         if redeem_name == "Change my BotGor font":
             print(f"{username} is changing their font to: {redeem_text}")
-            asyncio.create_task(Database.Database_API.add_user(User(name=username, font=redeem_text)))
+            settings:TwitchSettings = TwitchSettings(font=redeem_text)
+            asyncio.create_task(Database.Database_API.add_user(User(name=username, settings=settings)))
 
         return
