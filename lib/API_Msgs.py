@@ -4,7 +4,6 @@ JOIN_MSG:str = "join"
 MSG_MSG:str = "msg"
 NAME_KEY:str = "name"
 PORT_KEY:str = "port"
-USER_KEY:str = "user"
 CONTENT_KEY:str = "content"
 HEARTBEAT_MSG:str = "heartbeat"
 
@@ -23,3 +22,6 @@ SETUP_MSG:str = "setup"
 # WebUI
 SIZE_KEY:str = "size"
 FONT_KEY:str = "font"
+
+# Database
+ERROR_VALUE:str = "error"

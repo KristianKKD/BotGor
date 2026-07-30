@@ -61,7 +61,7 @@ class Broadcaster:
 
             for listener in self.listeners:
                 print(f"{self.name} is broadcasting: {json} to {listener.name}")
-                asyncio.create_task(post(msg=msg.url, port=listener.port, json=json, name=self.name))
+                asyncio.create_task(post(msg=msg.url, port=listener.port, body=json, name=self.name))
 
         self.processing = False
         return

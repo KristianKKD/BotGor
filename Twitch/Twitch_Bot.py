@@ -1,4 +1,5 @@
 import os
+import asyncio
 from typing import Any
 
 import twitchio
@@ -7,9 +8,10 @@ from twitchio.ext.commands.exceptions import CommandNotFound
 from twitchio import eventsub, authentication
 from twitchio import ChatMessage, WebsocketWelcome, SubscriptionRevoked, ChannelPointsAutoRedeemAdd, ChannelPointsRedemptionAdd
 
-from lib.User_Msg import UserMsg
-from lib.User_Chatter import UserSettings
 from lib.Broadcaster import Broadcaster
+import Database.Database_API
+from Database.Database_User import UserMsg, User
+from lib.API_Msgs import CONTENT_KEY
 
 #http://localhost:4343/oauth?scopes=channel%3Aread%3Aredemptions+user%3Aread%3Achat+user%3Awrite%3Achat+user%3Abot+channel%3Abot&force_verify=true
 
@@ -85,7 +87,6 @@ class ListenerComponent(twitchio.ext.commands.Component):
         self.bot:Bot = bot
         self.filtered_words:list[str] = filtered_words
         self.broadcaster:Broadcaster = broadcaster
-        self.users:dict[str, UserSettings] = {}
         print("Creating listener component!")
         return
 
@@ -102,11 +103,14 @@ class ListenerComponent(twitchio.ext.commands.Component):
 
         font:str = ""
         font_size:int = 0
-        if username in self.users:
-            font = self.users[username].font
-            font_size = self.users[username].font_size
+        user_data:User = await Database.Database_API.get_user(username=username)
+        if user_data:
+            font = user_data.font
+            font_size = user_data.font_size
+        else:
+            asyncio.create_task(Database.Database_API.add_user(User(name=username)))
         
-        msg:UserMsg = UserMsg(user=username, content=content, font=font, font_size=font_size)
+        msg:UserMsg = UserMsg(name=username, content=content, font=font, font_size=font_size)
         print(f"Message created: {msg}")
         
         if not content.startswith(self.bot._get_prefix):
@@ -131,7 +135,7 @@ class ListenerComponent(twitchio.ext.commands.Component):
         redeem_text:str = payload.user_input
 
         if redeem_name == "Change my BotGor font":
-            print(f"{username} is changing their font to: {redeem_name}")
-            self.users[username] = UserSettings(name=username, font_name=redeem_text)
+            print(f"{username} is changing their font to: {redeem_text}")
+            asyncio.create_task(Database.Database_API.add_user(User(name=username, font=redeem_text)))
 
         return

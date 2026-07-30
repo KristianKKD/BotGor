@@ -3,8 +3,7 @@ import asyncio
 from lib.MicroService import MicroServiceBase
 from lib.Environment import find_port
 from lib.Service_UI import Simple_UI
-from lib.API_Msgs import CONTEXT_KEY, PROMPT_KEY, RESPONSE_KEY, USER_KEY
-from lib.User_Msg import split_message
+from lib.API_Msgs import CONTEXT_KEY, PROMPT_KEY, RESPONSE_KEY, NAME_KEY, CONTENT_KEY
 
 from Chatbot.Chatbot_AIBot import AIBot
 
@@ -25,17 +24,15 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
         async def broadcast_response(prompt:str, context:list[str]):
             output:str = await self.ai.generate_response(prompt=prompt, context=context)
-            self.broadcaster.broadcast({PROMPT_KEY:prompt, USER_KEY:APP_NAME, RESPONSE_KEY:output})
+            self.broadcaster.broadcast({PROMPT_KEY:prompt, NAME_KEY:APP_NAME, RESPONSE_KEY:output})
             return
 
         response:str = await MicroServiceBase.handle_msg(self=self, msg=msg)
         if self.ai.busy:
             return {RESPONSE_KEY: 'Error: Model is busy, please try again.'}
 
-        user:str
-        content:str
-        user, content = split_message(msg=msg)
-        if not content: content = msg.get(RESPONSE_KEY, "")
+        user:str = msg.get(NAME_KEY, "")
+        content:str = msg.get(CONTENT_KEY,  msg.get(RESPONSE_KEY, "")) # Content or Response
         if user and content and not user == APP_NAME:
             if not self.ai.trigger or content.startswith(self.ai.trigger):
                 prompt:str = self.ai.create_prompt(user=user, content=content)

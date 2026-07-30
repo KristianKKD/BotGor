@@ -4,8 +4,7 @@ from lib.Environment import find_port
 from lib.MicroService import MicroServiceBase
 from lib.Broadcaster import Broadcaster
 from lib.Service_UI import Simple_UI
-from lib.API_Msgs import PORT_KEY, RESPONSE_KEY
-from lib.User_Msg import split_message
+from lib.API_Msgs import PORT_KEY, RESPONSE_KEY, NAME_KEY, CONTENT_KEY
 
 from TTS.TTS_Handler import TTS_Handler
 
@@ -29,9 +28,8 @@ class TTS_Service(MicroServiceBase, Simple_UI):
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
         response:dict[str, str] = await MicroServiceBase.handle_msg(self=self, msg=msg)
 
-        user:str
-        content:str
-        user, content = split_message(msg=msg)
+        user:str = msg.get(NAME_KEY, "")
+        content:str = msg.get(CONTENT_KEY, "")
         if not content: content = msg.get(RESPONSE_KEY, "")
         user = user or "Chatbot"
 

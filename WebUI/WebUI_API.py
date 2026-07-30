@@ -3,8 +3,7 @@ from pathlib import Path
 
 from lib.MicroService import MicroServiceBase
 from lib.Service_UI import Simple_UI
-from lib.User_Msg import split_message
-from lib.API_Msgs import SIZE_KEY, FONT_KEY, RESPONSE_KEY
+from lib.API_Msgs import SIZE_KEY, FONT_KEY, RESPONSE_KEY, NAME_KEY, CONTENT_KEY
 
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -48,8 +47,6 @@ class Font:
     def __str__(self):
         return self.text
 
-MAX_LINES_SHOWN:int = 20
-
 class WebUI_Service(MicroServiceBase, Simple_UI):
     def __init__(self, subscription_ports:list[int], ui_enabled:bool):
         WebUI_Service.shown_text:list[Font] = []
@@ -64,11 +61,8 @@ class WebUI_Service(MicroServiceBase, Simple_UI):
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
         response:dict[str, str] = await MicroServiceBase.handle_msg(self=self, msg=msg)
 
-        user:str
-        content:str
-        user, content = split_message(msg=msg)
-        content = content if content else msg.get(RESPONSE_KEY, "")
-
+        user:str = msg.get(NAME_KEY, "")
+        content = msg.get(CONTENT_KEY, msg.get(RESPONSE_KEY, ""))
         font_name:str = msg.get(FONT_KEY, "")
 
         size:int = 0
@@ -86,6 +80,7 @@ class WebUI_Service(MicroServiceBase, Simple_UI):
         return Font(text=text, size=size, font_name=font_name)
 
     def add_text(self, font:Font):
+        MAX_LINES_SHOWN:int = 20
         while(len(self.shown_text) >= MAX_LINES_SHOWN):
             self.shown_text.pop(0)
         WebUI_Service.shown_text.append(font)

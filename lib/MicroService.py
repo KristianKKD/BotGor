@@ -27,7 +27,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         self._register_api()
         server:Server = Server(app=self.app, port=self.port)
         asyncio.ensure_future(self.join_listeners(subscription_ports=subscription_ports))
-        asyncio.ensure_future(self.start_heartbeats(subscription_ports=subscription_ports))
+        asyncio.ensure_future(self.start_heartbeats())
         return
     
     def __str__(self):
@@ -37,7 +37,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         for listener in self.broadcaster.listeners:
             asyncio.run(post(msg=DISCONNECT_MSG, 
                             port=listener.port, 
-                            json={NAME_KEY: self.name, PORT_KEY: self.port},
+                            body={NAME_KEY: self.name, PORT_KEY: self.port},
                             name=self.name
                             )
             )
@@ -88,7 +88,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
             for port in subs:
                 response:dict[str, str] = await post(msg=JOIN_MSG, 
                                                      port=port, 
-                                                     json={NAME_KEY:self.name, PORT_KEY:str(self.port)},
+                                                     body={NAME_KEY:self.name, PORT_KEY:str(self.port)},
                                                      name=self.name
                                                      )
                 if response:
@@ -128,14 +128,14 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         async def check_heartbeat(port:int) -> bool:
             response:dict[str, str] = await post(msg=HEARTBEAT_MSG, 
                                         port=port, 
-                                        json={HEARTBEAT_MSG:self.name},
+                                        body={HEARTBEAT_MSG:self.name},
                                         name=self.name
                                         )
             return response.get(RESPONSE_KEY, None) == HEARTBEAT_MSG 
 
         TIMED_OUT_COUNT:int = 3
 
-        failed_response:defaultdict[str, int] = defaultdict(0) # listener name, failed responses
+        failed_response:defaultdict[str, int] = defaultdict(list) # listener name, failed responses
         while not self.service_shutdown:
             to_remove:list[Listener] = []
 
@@ -152,7 +152,7 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
             for listener in to_remove:
                 self.broadcaster.remove_listener(port=listener.port)
 
-            asyncio.sleep(3)
+            asyncio.sleep(5)
         return
 
     def handle_heartbeat(self, msg:dict[str, str]) -> dict[str, str]:
