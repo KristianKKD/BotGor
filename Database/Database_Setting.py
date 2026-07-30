@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from lib.API_Msgs import FONT_KEY, SIZE_KEY 
 
 @dataclass(slots=True)
-class Setting(ABC):
+class Settings(ABC):
     def to_json(self) -> dict[str, Any]:
         return vars(self).items()
     
@@ -12,12 +12,12 @@ class Setting(ABC):
         return str(self.to_json())
 
     @classmethod
-    def from_json(cls, data:dict[str, Any]) -> 'Setting | None':
+    def from_json(cls, data:dict[str, Any]) -> 'Settings | None':
         """Try to construct this Setting from data. Return None if keys missing."""
         pass
 
 @dataclass(slots=True)
-class TwitchSettings(Setting):
+class TwitchSettings(Settings):
     font:str = ""
     font_size:int = 0
 
@@ -31,5 +31,18 @@ class TwitchSettings(Setting):
     def from_json(cls, data:dict[str, Any]) -> 'TwitchSettings | None':
         return TwitchSettings(
             font=data.get(FONT_KEY, ""),
-            font_size=int(data.get(SIZE_KEY, 0))
+            font_size=data.get(SIZE_KEY, "0")
+        )
+
+@dataclass(slots=True)
+class TTSSettings(Settings):
+    voice:str = ""
+
+    def to_json(self) -> dict[str, str]:
+        return {
+                }
+
+    @classmethod
+    def from_json(cls, data:dict[str, Any]) -> 'TTSSettings | None':
+        return TTSSettings(
         )

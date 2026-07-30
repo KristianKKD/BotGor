@@ -1,6 +1,7 @@
 import os
 import sys
 import asyncio
+from multiprocessing.synchronize import Event as EventType
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -110,7 +111,7 @@ class WordBomb(Game):
         return
     
 
-async def run_wordbomb(manual_input=False):
+async def run_wordbomb(exit_flag:EventType=None, manual_input=False):
     load_environment()
 
     krabgor:Player = Player(player_name="KrabGor")
@@ -120,7 +121,7 @@ async def run_wordbomb(manual_input=False):
     wordbomb:WordBomb = WordBomb(players=[krabgor, alt_player], repeatable_triggers=True, broadcaster=broadcaster)
     service:Games_Service = Games_Service(game=wordbomb, sub_ports=[find_port("DISCORD")], broadcaster=broadcaster, ui_enabled=manual_input)
 
-    while not service.shutdown:
+    while not (exit_flag and exit_flag.is_set()) and not service.shutdown:
         await asyncio.sleep(5)
     return
 

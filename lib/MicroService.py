@@ -8,10 +8,17 @@ from lib.Environment import find_port
 from lib.Broadcaster import Broadcaster, Listener
 from lib.API_REST import post
 
-from lib.API_Msgs import DISCONNECT_MSG, JOIN_MSG, MSG_MSG, NAME_KEY, PORT_KEY, HEARTBEAT_MSG, RESPONSE_KEY
+from lib.API_Msgs import DISCONNECT_MSG, JOIN_MSG, MSG_MSG, NAME_KEY, PORT_KEY, HEARTBEAT_MSG, RESPONSE_KEY, COMMAND_MSG, SHUTDOWN_MSG, CONTENT_KEY
 
-class MicroServiceBase(): # To be implemented as an API, then inherited as a parent
-    def __init__(self, name:str, subscription_ports:list[int]=[], broadcaster:Broadcaster=None, commands:dict[str, Awaitable[bool]]=None):
+from lib.Service_UI import Simple_UI
+
+class MicroServiceBase(Simple_UI): # To be implemented as an API, then inherited as a parent
+    def __init__(self, name:str,
+                 subscription_ports:list[int]=[],
+                 broadcaster:Broadcaster=None,
+                 ui_enabled:bool=False,
+                 commands:dict[str, Awaitable[bool]]=None,
+                 ):
         print(f"Starting {name}...")
 
         self.name:str = name
@@ -28,16 +35,18 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         server:Server = Server(app=self.app, port=self.port)
         asyncio.ensure_future(self.join_listeners(subscription_ports=subscription_ports))
         asyncio.ensure_future(self.start_heartbeats())
+
+        Simple_UI.__init__(self=self, ui_enabled=ui_enabled, commands=commands, ui_name=name)
         return
     
     def __str__(self):
-        return {NAME_KEY:{self.name}, PORT_KEY:{self.port}}
+        return {NAME_KEY:{self.name}, PORT_KEY:{str(self.port)}}
 
     def __del__(self):
         for listener in self.broadcaster.listeners:
             asyncio.run(post(msg=DISCONNECT_MSG, 
                             port=listener.port, 
-                            body={NAME_KEY: self.name, PORT_KEY: self.port},
+                            body={NAME_KEY: self.name, PORT_KEY:str(self.port)},
                             name=self.name
                             )
             )
@@ -74,11 +83,11 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
 
         print("Attempting to join the listeners again...")
         asyncio.create_task(self.join_listeners(subscription_ports=self._subscription_ports)) # Restart the join process if they are restarting
-        return {NAME_KEY: self.name, PORT_KEY: self.port, DISCONNECT_MSG: "ok"}
+        return {NAME_KEY:self.name, PORT_KEY:str(self.port), DISCONNECT_MSG: "ok"}
 
     def service_shutdown(self):
-        print(f"Shutting down {self.name}...")
-        self.broadcaster.broadcast(url=DISCONNECT_MSG, content={NAME_KEY:self.name})
+        print(f"Shutting down service {self.name}...")
+        self.broadcaster.broadcast(url=DISCONNECT_MSG, content={NAME_KEY:self.name, PORT_KEY:str(self.port), SHUTDOWN_MSG:self.name})
         self.shutdown = True
         return
 
@@ -98,15 +107,15 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         if len(subscription_ports) == 0:
             return {}
 
-        print(f"{self.name} joining listeners...")
+        print(f"{self.name} joining listeners: {subscription_ports}...")
 
         to_join:list[int] = subscription_ports
         max_attempts:int = 1000
         
-        for attempt in range(max_attempts):
-            if attempt % 50 == 0 or attempt == 0:
-                print(f"{self.name} joining listeners {subscription_ports} attempt:{attempt}/{max_attempts}")
-
+        for _ in range(max_attempts):
+            if self.shutdown:
+                break
+            
             responses:dict[str, str] = await get_responses(subs=to_join)
 
             # Remove ports that responded successfully from the "to join" list
@@ -125,38 +134,42 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
         return self.subscribed_broadcasters
 
     async def start_heartbeats(self):
-        async def check_heartbeat(port:int) -> bool:
+        async def check_heartbeat(listener:Listener):
+            TIMED_OUT_COUNT:int = 3
+
             response:dict[str, str] = await post(msg=HEARTBEAT_MSG, 
-                                        port=port, 
+                                        port=listener.port, 
                                         body={HEARTBEAT_MSG:self.name},
                                         name=self.name
                                         )
-            return response.get(RESPONSE_KEY, None) == HEARTBEAT_MSG 
 
-        TIMED_OUT_COUNT:int = 3
+            if not response.get(RESPONSE_KEY, None) == HEARTBEAT_MSG:
+                failed_response[listener.name] = failed_response.get(listener.name, 0) + 1
+                if failed_response[listener.name] > TIMED_OUT_COUNT:
+                    print(f"Failed to get a heartbeat from: {listener.name}")
+                    self.broadcaster.remove_listener(port=listener.port)
+                    failed_response.pop(listener.name, None)
+            else: # Reset the counter on successful heartbeat
+                failed_response.pop(listener.name, None)
 
-        failed_response:defaultdict[str, int] = defaultdict(list) # listener name, failed responses
-        while not self.service_shutdown:
-            to_remove:list[Listener] = []
-
-            listener:Listener
-            for listener in self.broadcaster.listeners:
-                if not check_heartbeat(listener.port):
-                    failed_response[listener.name] = failed_response[listener.name] + 1
-                    if failed_response[listener.name] > TIMED_OUT_COUNT:
-                        print(f"Failed to get a heartbeat from: {listener.name}")
-                        to_remove.append(listener)
-                        failed_response.pop(listener.name)
-
-            listener:Listener
-            for listener in to_remove:
-                self.broadcaster.remove_listener(port=listener.port)
-
-            asyncio.sleep(5)
+        failed_response:dict[str, int] = {}
+        while not self.shutdown:
+            tasks:list[Awaitable] = [check_heartbeat(listener) for listener in self.broadcaster.listeners]
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
+            
+            await asyncio.sleep(5)
         return
 
-    def handle_heartbeat(self, msg:dict[str, str]) -> dict[str, str]:
-        return {NAME_KEY:self.name, PORT_KEY:PORT_KEY, RESPONSE_KEY:HEARTBEAT_MSG}
+    async def handle_heartbeat(self, msg:dict[str, str]) -> dict[str, str]:
+        return {NAME_KEY:self.name, PORT_KEY:str(self.port), RESPONSE_KEY:HEARTBEAT_MSG}
+
+    async def handle_command(self, msg:dict[str, str]) -> dict[str, str]:
+        cmd:str = msg.get(COMMAND_MSG, "")
+        content:str = msg.get(CONTENT_KEY, "")
+        if cmd:
+            await self.handle_input(user_input=f"{cmd}:{content}")
+        return {NAME_KEY:self.name, PORT_KEY:str(self.port), COMMAND_MSG:cmd, CONTENT_KEY:content}
 
     def _register_api(self):
         @self.app.post(f"/{JOIN_MSG}")
@@ -186,3 +199,20 @@ class MicroServiceBase(): # To be implemented as an API, then inherited as a par
                 return await self.handle_heartbeat(msg=msg)
             except:
                 raise ValueError(f"{self.name} received an invalid {HEARTBEAT_MSG} msg! {msg}")
+
+        @self.app.post(f"/{COMMAND_MSG}")
+        async def command(msg:dict[str, str]) -> dict[str, str]:
+            try:
+                return await self.handle_command(msg=msg)
+            except:
+                raise ValueError(f"{self.name} received an invalid {COMMAND_MSG} msg! {msg}")
+
+        @self.app.post(f"/{SHUTDOWN_MSG}")
+        async def command(msg:dict[str, str]) -> dict[str, str]:
+            try:
+                return self.service_shutdown()
+            except:
+                raise ValueError(f"{self.name} received an invalid {SHUTDOWN_MSG} msg! {msg}")
+            
+async def send_shutdown(port:int):
+    return await post(msg=SHUTDOWN_MSG, port=port)

@@ -28,7 +28,7 @@ class TTS_Base(ABC):
     def __del__(self):
         #print("Deleting TTS instance")
         return
-        
+
     def speak(self, text:str, user:str, output_file:bool) -> str:
         print(f"{user} said:{text}")
 
@@ -44,6 +44,9 @@ class TTS_Base(ABC):
             self.play_audio(audio_path=audio_path, text=text)
 
         return audio_path
+
+    def configure_engine(self, **kwargs):
+        return
 
     @abstractmethod
     def stop_audio(self):

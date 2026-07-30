@@ -1,4 +1,5 @@
 import asyncio
+from typing import Awaitable
 
 from lib.MicroService import MicroServiceBase
 from lib.Environment import find_port
@@ -13,12 +14,8 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
     def __init__(self, ai:AIBot, ui_enabled:bool):
         self.ai:AIBot = ai
 
-        MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=[find_port("DISCORD"), find_port("TWITCH")])
-
-        commands = {"msg": self.manual_msg}
-
-        if ui_enabled:
-            Simple_UI.__init__(self=self, commands=commands)
+        commands:dict[str, Awaitable] = {"msg": self.manual_msg}
+        MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=[find_port("DISCORD"), find_port("TWITCH")], ui_enabled=ui_enabled, commands=commands)
         return
     
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:

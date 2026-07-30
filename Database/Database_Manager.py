@@ -1,6 +1,6 @@
 from typing import Any
 from Database.Database_User import User
-from Database.Database_Setting import Setting
+from Database.Database_Setting import Settings
 from dataclasses import asdict
 
 class Database_UserManager:
@@ -19,9 +19,9 @@ class Database_UserManager:
         else:
             old_user:User = self._users[new_user.name]
 
-            new_setting:Setting
+            new_setting:Settings
             for new_setting in new_user.settings:
-                old_setting:Setting = next((setting for setting in old_user.settings 
+                old_setting:Settings = next((setting for setting in old_user.settings 
                                            if type(setting) == type(new_setting)), None)
 
                 if old_setting: # If we already have that kind of settings, modify

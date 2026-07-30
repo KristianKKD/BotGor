@@ -1,6 +1,7 @@
 import sys
 import os
 import asyncio
+from multiprocessing.synchronize import Event as EventType
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -13,7 +14,7 @@ from TTS.TTS_Engines.TTS_ElevenLabs import ElevenLabsTTS
 from TTS.TTS_Handler import TTS_Handler
 from TTS.TTS_API import TTS_Service
 
-async def run_tts(manual_input:bool=False):
+async def run_tts(exit_flag:EventType=None, manual_input:bool=False):
     load_environment()
     
     tts_engine:TTS_Base = TTS_System(voice="Microsoft David Desktop - English (United States)")
@@ -25,7 +26,7 @@ async def run_tts(manual_input:bool=False):
     tts_handler:TTS_Handler = TTS_Handler(engine=tts_engine, broadcaster=broadcaster)
     service:TTS_Service = TTS_Service(tts=tts_handler, broadcaster=broadcaster, ui_enabled=manual_input)
 
-    while not service.shutdown:
+    while not (exit_flag and exit_flag.is_set()) and not service.shutdown:
         await asyncio.sleep(5)
     return
 

@@ -1,22 +1,22 @@
+from typing import Awaitable
+
 from lib.MicroService import MicroServiceBase
-from lib.Service_UI import Simple_UI
 from lib.API_Msgs import NAME_KEY, CONTENT_KEY, ERROR_VALUE
 from lib.Environment import find_port
+from lib.API_REST import get, post
 
 from Database.Database_Manager import Database_UserManager
 from Database.Database_User import User
 
-from lib.API_REST import get, post
 
 APP_NAME:str = "DATABASE"
 
-class Database_Service(MicroServiceBase, Simple_UI):
+class Database_Service(MicroServiceBase):
     def __init__(self, manager:Database_UserManager, ui_enabled:bool):
         self.manager:Database_UserManager = manager
 
-        MicroServiceBase.__init__(self=self, name=APP_NAME)
-        if ui_enabled:
-            Simple_UI.__init__(self=self, commands={"add":self.add_user_manual, "show":self.show_all_users})
+        commands:dict[str, Awaitable] = {"add":self.add_user_manual, "show":self.show_all_users}
+        MicroServiceBase.__init__(self=self, name=APP_NAME, ui_enabled=ui_enabled, commands=commands)
         return
 
     def _register_api(self):

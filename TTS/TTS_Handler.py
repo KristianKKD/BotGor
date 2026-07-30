@@ -47,6 +47,10 @@ class TTS_Handler():
         print(f"Changed voice to:{self._voice}")
         return self._voice
 
+    def configure_voice(self, **kwargs):
+        self.engine.configure_engine(**kwargs)  # Unpacks dict into keyword arguments
+        return
+
     async def _speak_loop(self):
         while(len(self._tts_in_progress) > 0):
             if self.paused:

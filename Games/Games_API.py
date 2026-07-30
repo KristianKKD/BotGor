@@ -1,5 +1,4 @@
 from lib.MicroService import MicroServiceBase
-from lib.Service_UI import Simple_UI
 
 from Games.Games_Game import Game
 
@@ -8,13 +7,11 @@ from lib.Broadcaster import Broadcaster
 
 APP_NAME:str = "GAMES"
 
-class Games_Service(MicroServiceBase, Simple_UI):
+class Games_Service(MicroServiceBase):
     def __init__(self, game:Game, sub_ports:list[int], broadcaster:Broadcaster, ui_enabled:bool):
         self.game:Game = game
 
-        MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=sub_ports)
-        if ui_enabled:
-            Simple_UI.__init__(self=self)
+        MicroServiceBase.__init__(self=self, name=APP_NAME, broadcaster=broadcaster, subscription_ports=sub_ports, ui_enabled=ui_enabled)
         return
     
     def _register_api(self):

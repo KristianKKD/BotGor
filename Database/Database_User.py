@@ -1,10 +1,10 @@
 import json
 from typing import Any
 from lib.API_Msgs import NAME_KEY, CONTENT_KEY
-from Database.Database_Setting import Setting, TwitchSettings
+from Database.Database_Setting import Settings, TwitchSettings
 
 class User:
-    def __init__(self, name:str="", settings:list[Setting]=None, data:dict[str, str]=None):
+    def __init__(self, name:str="", settings:list[Settings]=None, data:dict[str, str]=None):
         self.name:str = name
 
         if settings and not isinstance(settings, list):
@@ -23,17 +23,17 @@ class User:
 
         # Convert the data from CONTENT: {data} to just {data}
         try:
-            content = json.loads(data['content'].replace("'", '"'))
+            content = json.loads(data[CONTENT_KEY].replace("'", '"'))
             data.update(content)
         except:
             pass
 
-        known_setting_class:list[Setting] = [TwitchSettings] # list of classes that inherit from Setting
+        known_setting_class:list[Settings] = [TwitchSettings] # List of classes that inherit from Setting
 
         # Re-construct an object from json data based on known setting types
-        setting_class:Setting
+        setting_class:Settings
         for setting_class in known_setting_class:
-            setting:Setting = setting_class.from_json(data)
+            setting:Settings = setting_class.from_json(data)
             if setting:
                 self.settings.append(setting)
 

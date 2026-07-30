@@ -1,7 +1,6 @@
 import os
 
 from lib.MicroService import MicroServiceBase
-from lib.Service_UI import Simple_UI
 from lib.Environment import find_port
 
 from Discord.Discord_Bot import Discord_Bot
@@ -10,14 +9,11 @@ from lib.Broadcaster import Broadcaster
 
 APP_NAME:str = "DISCORD"
 
-class Discord_Service(MicroServiceBase, Simple_UI):
+class Discord_Service(MicroServiceBase):
     def __init__(self, discord_bot:Discord_Bot, broadcaster:Broadcaster, ui_enabled:bool):
         self._tts_port:int = find_port("TTS")
         self.discord_bot:Discord_Bot = discord_bot
-        MicroServiceBase.__init__(self=self, name=APP_NAME, subscription_ports=[self._tts_port], broadcaster=broadcaster)
-        
-        if ui_enabled:
-            Simple_UI.__init__(self=self)
+        MicroServiceBase.__init__(self=self, name=APP_NAME, broadcaster=broadcaster, subscription_ports=[self._tts_port], ui_enabled=ui_enabled)
         return
 
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:

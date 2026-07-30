@@ -1,6 +1,7 @@
 import os
 import sys
 import asyncio
+from multiprocessing.synchronize import Event as EventType
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -23,7 +24,7 @@ I shouldn't hallucinate viewer messages as they will be given to me one at a tim
 I am grouchy and hate myself, making sure to make everyone else know that. I am generally awful to communicate with and mean spirited.
 """
 
-async def run_ai(manual_input:bool=False):
+async def run_ai(exit_flag:EventType=None, manual_input:bool=False):
     load_environment()
 
     ai:AIBot = AIBot(model_id=MODEL_ID,
@@ -36,7 +37,7 @@ async def run_ai(manual_input:bool=False):
                      )
     service:Chatbot_Service = Chatbot_Service(ai=ai, ui_enabled=manual_input)
 
-    while not service.shutdown:
+    while not (exit_flag and exit_flag.is_set()) and not service.shutdown:
         await asyncio.sleep(5)
     return
 

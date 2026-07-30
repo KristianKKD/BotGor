@@ -1,6 +1,3 @@
-import warnings
-# warnings.filterwarnings("ignore", category=FutureWarning)
-
 from RealtimeTTS import TextToAudioStream, SystemEngine
 from TTS.TTS_Engines.TTS_Base import TTS_Base
 
@@ -35,4 +32,7 @@ class TTS_System(TTS_Base):
     def select_voice(self, voice:str):
         self.engine.set_voice(voice=voice)
         return
-    
+
+    def configure_engine(self, **kwargs):
+        self.engine.set_voice_parameters(**kwargs)
+        return

@@ -6,6 +6,8 @@ NAME_KEY:str = "name"
 PORT_KEY:str = "port"
 CONTENT_KEY:str = "content"
 HEARTBEAT_MSG:str = "heartbeat"
+COMMAND_MSG:str = "command"
+SHUTDOWN_MSG:str = "shutdown"
 
 # TTS/Discord
 PATH_KEY:str = "path"
