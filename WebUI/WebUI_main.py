@@ -14,7 +14,7 @@ from WebUI.WebUI_API import WebUI_Service
 async def run_webui(exit_flag:EventType=None, manual_input:bool=False):
     load_environment()
     
-    django.conf.settings.configure(SECRET_KEY=os.environ["DJANGO_SECRET_KEY"], DEBUG=True, ROOT_URLCONF="WebUI.WebUI_API")
+    django.conf.settings.configure(SECRET_KEY=os.environ["DJANGO_SECRET_KEY"], DEBUG=True, ROOT_URLCONF="WebUI.WebUI_views")
     django.setup()
 
     service:WebUI_Service = WebUI_Service(subscription_ports=[find_port("TWITCH"), find_port("DISCORD"), find_port("CHATBOT")], ui_enabled=manual_input)
