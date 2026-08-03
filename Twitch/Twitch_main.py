@@ -10,7 +10,6 @@ from Twitch.Twitch_Bot import Twitch_Bot
 from Twitch.Twitch_API import Twitch_Service
 
 FILTER_PATH:str = "Twitch/censoredwords"
-CHATTER_PATH:str = "Twitch/chatterdata.json"
 PREFIX:str = ""
 
 async def run_twitch(exit_flag:EventType=None, manual_input:bool=False):

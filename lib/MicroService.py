@@ -83,13 +83,13 @@ class MicroServiceBase(Simple_UI): # To be implemented as an API, then inherited
 
         print("Attempting to join the listeners again...")
         asyncio.create_task(self.join_listeners(subscription_ports=self._subscription_ports)) # Restart the join process if they are restarting
-        return {NAME_KEY:self.name, PORT_KEY:str(self.port), DISCONNECT_MSG: "ok"}
+        return {NAME_KEY:self.name, PORT_KEY:str(self.port), DISCONNECT_MSG:"ok"}
 
     def service_shutdown(self):
         print(f"Shutting down service {self.name}...")
         self.broadcaster.broadcast(url=DISCONNECT_MSG, content={NAME_KEY:self.name, PORT_KEY:str(self.port), SHUTDOWN_MSG:self.name})
         self.shutdown = True
-        return
+        return {NAME_KEY:self.name, PORT_KEY:str(self.port), SHUTDOWN_MSG:"ok"}
 
     async def join_listeners(self, subscription_ports:list[int]) -> dict[str, str]:
         async def get_responses(subs:list[int]) -> dict[str, str]:
@@ -208,7 +208,7 @@ class MicroServiceBase(Simple_UI): # To be implemented as an API, then inherited
                 raise ValueError(f"{self.name} received an invalid {COMMAND_MSG} msg! {msg}")
 
         @self.app.post(f"/{SHUTDOWN_MSG}")
-        async def command(msg:dict[str, str]) -> dict[str, str]:
+        async def shutdown(msg:dict[str, str]) -> dict[str, str]:
             try:
                 return self.service_shutdown()
             except:
