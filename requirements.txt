@@ -40,6 +40,7 @@ transformers==5.13.0
 huggingface_hub==1.22.0
 accelerate==1.14.0
 torch==2.13.0+cu132
+bitsandbytes==0.50.0
 
 # STT
 speechrecognition==3.17.0
@@ -48,3 +49,6 @@ faster-whisper == 1.2.1
 
 # WebUI
 django==5.2.16
+
+# Socket
+websocket==0.2.1

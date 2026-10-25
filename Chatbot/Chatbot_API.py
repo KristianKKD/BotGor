@@ -19,8 +19,8 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
         return
     
     async def handle_msg(self, msg:dict[str, str]) -> dict[str, str]:
-        async def broadcast_response(prompt:str, context:list[str]):
-            output:str = await self.ai.generate_response(prompt=prompt, context=context)
+        async def broadcast_response(user:str, prompt:str, context:list[str]):
+            output:str = await self.ai.generate_response(user=user, prompt=prompt, context=context)
             self.broadcaster.broadcast({PROMPT_KEY:prompt, NAME_KEY:APP_NAME, RESPONSE_KEY:output})
             return
 
@@ -32,9 +32,8 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
         content:str = msg.get(CONTENT_KEY,  msg.get(RESPONSE_KEY, "")) # Content or Response
         if user and content and not user == APP_NAME:
             if not self.ai.trigger or content.startswith(self.ai.trigger):
-                prompt:str = self.ai.create_prompt(user=user, content=content)
                 context:list[str] = msg.get(CONTEXT_KEY, [])
-                asyncio.create_task(broadcast_response(prompt=prompt, context=context))
+                asyncio.create_task(broadcast_response(user=user, prompt=content, context=context))
         
         return response
         
@@ -44,7 +43,7 @@ class Chatbot_Service(MicroServiceBase, Simple_UI):
         return False
 
     async def manual_msg(self, content:str) -> bool:
-        response:str = await self.ai.generate_response(prompt=content)
+        response:str = await self.ai.generate_response(user="UIGor", prompt=content)
         self.broadcaster.broadcast({PROMPT_KEY:content, RESPONSE_KEY:response})
         print(response)
         return True
